@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  telegramId      String   @unique
+  solanaPublicKey String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  intents         Intent[]
+}
+
+model Intent {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [telegramId])
+  inputToken      String
+  outputToken     String
+  amount          Float
+  slippage        Float
+  status          String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  txId            String?
+  outAmount       Float?
+  privacyScore    Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
