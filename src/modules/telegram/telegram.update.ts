@@ -1,18 +1,14 @@
 import { Update, Start, Help, On, Command } from 'nestjs-telegraf';
 import { Context, Scenes } from 'telegraf';
+import { ConfigService } from '@nestjs/config';
 
 @Update()
 export class TelegramUpdate {
+  constructor(private readonly configService: ConfigService) {}
+
   @Start()
-  async onStart(ctx: Context) {
-    await ctx.reply(
-      '🛸 Welcome to B2 Moves — Private Execution Protocol\n\n' +
-      'Trade in silence. Move like a ghost. Leave only outcomes.\n\n' +
-      'Available Commands:\n' +
-      '/swap - Initiate a private swap\n' +
-      '/status - Check current execution status\n' +
-      '/help - Get detailed instructions',
-    );
+  async onStart(ctx: Scenes.SceneContext) {
+    await ctx.scene.enter('onboarding-wizard');
   }
 
   @Help()
@@ -34,16 +30,22 @@ export class TelegramUpdate {
 
   @Command('link')
   async onLink(ctx: Context) {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    
     await ctx.reply(
-      '🔗 Link your Solana Wallet\n\n' +
-      'To execute private trades, B2 Moves needs to verify your ownership of a Solana wallet.\n\n' +
-      'Step 1: Click the button below to open the B2 Secure Linker.\n' +
-      'Step 2: Connect your Phantom/Solflare wallet.\n' +
-      'Step 3: Sign the one-time verification message.',
+      '🛸 *B2 Onboarding: Stealth Activation*\n\n' +
+      'To execute private intents, you must link your Solana identity.\n\n' +
+      '1️⃣ Tap the button below.\n' +
+      '2️⃣ Sign the one-time activation message.\n' +
+      '3️⃣ Return here to start moving.',
       {
+        parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[
-            { text: '🌐 Connect Wallet', url: 'https://b2moves.io/verify?user=' + ctx.from?.id }
+            { 
+              text: '🛡️ Activate Stealth Link', 
+              web_app: { url: `${frontendUrl}/link?userId=${ctx.from?.id}` } 
+            }
           ]]
         }
       }
