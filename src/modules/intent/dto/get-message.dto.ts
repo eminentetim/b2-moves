@@ -1,9 +1,18 @@
-import { IsString, IsNumber, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsNotEmpty } from 'class-validator';
+import { Transform } from 'class-transformer';
 
-export class CreateIntentDto {
+export class GetMessageDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  nonce: string;
+
+  @IsString()
+  @IsNotEmpty()
+  publicKey: string;
 
   @IsString()
   @IsOptional()
@@ -15,27 +24,13 @@ export class CreateIntentDto {
 
   @IsNumber()
   @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
   amount?: number;
 
   @IsNumber()
   @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
   slippage?: number;
-
-  @IsNumber()
-  @IsOptional()
-  deadline?: number;
-
-  @IsString()
-  @IsNotEmpty()
-  nonce: string;
-
-  @IsString()
-  @IsNotEmpty()
-  signature: string;
-
-  @IsString()
-  @IsNotEmpty()
-  publicKey: string;
 
   @IsString()
   @IsOptional()
@@ -47,5 +42,6 @@ export class CreateIntentDto {
 
   @IsNumber()
   @IsOptional()
+  @Transform(({ value }) => parseInt(value))
   messageId?: number;
 }

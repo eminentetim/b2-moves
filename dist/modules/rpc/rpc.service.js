@@ -17,63 +17,50 @@ const web3_js_1 = require("@solana/web3.js");
 let RpcService = RpcService_1 = class RpcService {
     configService;
     logger = new common_1.Logger(RpcService_1.name);
-    connection;
-    backupConnection = null;
+    connections = [];
     commitment;
     constructor(configService) {
         this.configService = configService;
         this.commitment = this.configService.get('SOLANA_COMMITMENT') || 'confirmed';
     }
     onModuleInit() {
-        const mainRpc = this.configService.get('SOLANA_HELIUS_RPC') ||
-            this.configService.get('SOLANA_RPC_URL') ||
-            'https://api.mainnet-beta.solana.com';
-        const backupRpc = this.configService.get('SOLANA_QUICKNODE_RPC');
-        this.connection = new web3_js_1.Connection(mainRpc, this.commitment);
-        if (backupRpc) {
-            this.backupConnection = new web3_js_1.Connection(backupRpc, this.commitment);
-            this.logger.log(`RPC Initialized: Helius (Main), QuickNode (Backup)`);
-        }
-        else {
-            this.logger.log(`RPC Initialized: ${mainRpc}`);
-        }
+        const urls = [
+            this.configService.get('HELIUS_GATEKEEPER_RPC'),
+            this.configService.get('HELIUS_STANDARD_RPC'),
+            this.configService.get('SOLANA_QUICKNODE_RPC'),
+            this.configService.get('SOLANA_RPC_URL'),
+            'https://api.mainnet-beta.solana.com'
+        ].filter(url => !!url);
+        const uniqueUrls = [...new Set(urls)];
+        this.connections = uniqueUrls.map(url => new web3_js_1.Connection(url, this.commitment));
+        this.logger.log(`RPC Manager Initialized with ${this.connections.length} redundant endpoints.`);
     }
     getConnection() {
-        return this.connection;
+        return this.connections[0];
     }
     async getBalance(publicKey) {
-        try {
-            const balance = await this.connection.getBalance(new web3_js_1.PublicKey(publicKey));
-            return balance / 10 ** 9;
-        }
-        catch (error) {
-            this.logger.error(`Failed to get balance from primary RPC, retrying with backup...`);
-            if (this.backupConnection) {
-                const balance = await this.backupConnection.getBalance(new web3_js_1.PublicKey(publicKey));
+        for (const conn of this.connections) {
+            try {
+                const balance = await conn.getBalance(new web3_js_1.PublicKey(publicKey));
                 return balance / 10 ** 9;
             }
-            throw error;
+            catch (error) {
+                this.logger.warn(`RPC Failover: Attempting next provider after error: ${error.message}`);
+            }
         }
+        throw new Error('All RPC providers failed to fetch balance.');
     }
     async getLatestBlockhash() {
-        return this.connection.getLatestBlockhash(this.commitment);
+        return this.getConnection().getLatestBlockhash(this.commitment);
     }
     async simulateTransaction(transaction) {
-        this.logger.log(`Simulating transaction...`);
-        const simulation = await this.connection.simulateTransaction(transaction);
+        this.logger.log(`Simulating transaction across primary RPC...`);
+        const simulation = await this.getConnection().simulateTransaction(transaction);
         if (simulation.value.err) {
             this.logger.error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
             throw new Error(`Transaction simulation failed`);
         }
         return simulation;
-    }
-    async confirmTransaction(signature) {
-        this.logger.log(`Confirming transaction: ${signature}`);
-        const latestBlockhash = await this.getLatestBlockhash();
-        return this.connection.confirmTransaction({
-            signature,
-            ...latestBlockhash
-        }, this.commitment);
     }
 };
 exports.RpcService = RpcService;

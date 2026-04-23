@@ -1,8 +1,11 @@
 import { Update, Start, Help, On, Command } from 'nestjs-telegraf';
 import { Context, Scenes } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
+import { UseGuards } from '@nestjs/common';
+import { TelegramRateLimiterGuard } from './telegram-rate-limiter.guard';
 
 @Update()
+@UseGuards(TelegramRateLimiterGuard)
 export class TelegramUpdate {
   constructor(private readonly configService: ConfigService) {}
 

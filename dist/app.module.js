@@ -12,6 +12,8 @@ const config_1 = require("@nestjs/config");
 const bullmq_1 = require("@nestjs/bullmq");
 const nestjs_telegraf_1 = require("nestjs-telegraf");
 const telegraf_1 = require("telegraf");
+const serve_static_1 = require("@nestjs/serve-static");
+const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const intent_module_1 = require("./modules/intent/intent.module");
@@ -23,6 +25,17 @@ const vanish_module_1 = require("./modules/vanish/vanish.module");
 const prisma_module_1 = require("./database/prisma/prisma.module");
 const rpc_module_1 = require("./modules/rpc/rpc.module");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply((req, res, next) => {
+            const logger = new common_1.Logger('HTTP');
+            if (!req.url.includes('assets')) {
+                logger.log(`${req.method} ${req.url}`);
+            }
+            next();
+        })
+            .forRoutes('*');
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
@@ -32,6 +45,10 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
             }),
             prisma_module_1.PrismaModule,
+            serve_static_1.ServeStaticModule.forRoot({
+                rootPath: (0, path_1.join)(process.cwd(), '..', 'b2-signer', 'dist'),
+                exclude: ['/intent/(.*)', '/status/(.*)'],
+            }),
             bullmq_1.BullModule.forRootAsync({
                 inject: [config_1.ConfigService],
                 useFactory: (configService) => ({

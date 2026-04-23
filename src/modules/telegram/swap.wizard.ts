@@ -47,8 +47,7 @@ export class SwapWizard {
     
     const state = ctx.wizard.state as any;
     state.amount = amount;
-    
-    // Fallback to a real IP if possible, or 127.0.0.1 (though IP is better for Telegram)
+
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
     if (!frontendUrl || frontendUrl.includes('localhost')) {
@@ -56,7 +55,7 @@ export class SwapWizard {
         return ctx.scene.leave();
     }
 
-    await ctx.reply(
+    const summaryMsg = await ctx.reply(
       `🎯 *Swap Summary*:\n\n` +
       `*Sell*: ${state.amount} ${state.inputToken}\n` +
       `*Receive*: ${state.outputToken}\n` +
@@ -68,12 +67,30 @@ export class SwapWizard {
           inline_keyboard: [[
             { 
               text: '✍️ Sign & Execute', 
-              url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}` 
+              web_app: { url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${0}` } // Placeholder
             }
           ]]
         }
       }
     );
+
+    // We can't put the msgId in the same message we just sent if we need it for the URL.
+    // However, in Telegram, we can update the markup AFTER sending.
+
+    await ctx.telegram.editMessageReplyMarkup(
+        ctx.chat?.id!,
+        summaryMsg.message_id,
+        undefined,
+        {
+            inline_keyboard: [[
+                { 
+                  text: '✍️ Sign & Execute Move', 
+                  web_app: { url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${summaryMsg.message_id}` } 
+                }
+            ]]
+        }
+    );
+
     
     return ctx.scene.leave();
   }

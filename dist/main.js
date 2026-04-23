@@ -39,15 +39,26 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
+    const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.enableCors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+    });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
+        exceptionFactory: (errors) => {
+            logger.error(`Validation Failed: ${JSON.stringify(errors)}`);
+            return errors;
+        }
     }));
     const port = process.env.PORT ?? 3000;
     await app.listen(port);
-    console.log(`B2 Moves Protocol is active on port ${port}`);
+    console.log(`\n🚀 B2 Moves Backend is LIVE on port ${port}`);
+    console.log(`👉 Watch this terminal for logs when you click the button in Telegram.\n`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

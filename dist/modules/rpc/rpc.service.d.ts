@@ -4,8 +4,7 @@ import { Connection, Transaction } from '@solana/web3.js';
 export declare class RpcService implements OnModuleInit {
     private readonly configService;
     private readonly logger;
-    private connection;
-    private backupConnection;
+    private connections;
     private commitment;
     constructor(configService: ConfigService);
     onModuleInit(): void;
@@ -16,5 +15,4 @@ export declare class RpcService implements OnModuleInit {
         lastValidBlockHeight: number;
     }>>;
     simulateTransaction(transaction: Transaction): Promise<import("@solana/web3.js").RpcResponseAndContext<import("@solana/web3.js").SimulatedTransactionResponse>>;
-    confirmTransaction(signature: string): Promise<import("@solana/web3.js").RpcResponseAndContext<import("@solana/web3.js").SignatureResult>>;
 }

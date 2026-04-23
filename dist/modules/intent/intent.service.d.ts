@@ -10,6 +10,11 @@ export declare class IntentService {
     constructor(orchestratorService: OrchestratorService, prisma: PrismaService, utility: IntentUtility);
     processIntent(createIntentDto: CreateIntentDto): Promise<{
         status: string;
+        message: string;
+        intentId?: undefined;
+        nonce?: undefined;
+    } | {
+        status: string;
         intentId: string;
         message: string;
         nonce: string;

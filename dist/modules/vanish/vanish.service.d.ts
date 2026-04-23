@@ -7,6 +7,24 @@ export declare class VanishService {
     private readonly apiUrl;
     private readonly apiKey;
     constructor(httpService: HttpService, configService: ConfigService);
-    getPrivateRoute(inputToken: string, outputToken: string, amount: number): Promise<any>;
-    executePrivateSwap(swapTransaction: any, privateRoute: any): Promise<any>;
+    checkHealth(): Promise<any>;
+    getOneTimeWallet(): Promise<any>;
+    createTrade(payload: {
+        user_address: string;
+        source_token_address: string;
+        target_token_address: string;
+        amount: string;
+        swap_transaction: string;
+        one_time_wallet: string;
+        user_signature: string;
+        timestamp: string;
+    }): Promise<any>;
+    commitAction(tx_id: string): Promise<any>;
+    generateVanishSignMessage(data: {
+        user_address: string;
+        source_token_address: string;
+        target_token_address: string;
+        amount: string;
+        timestamp: string;
+    }): string;
 }

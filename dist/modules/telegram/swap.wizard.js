@@ -56,7 +56,7 @@ let SwapWizard = class SwapWizard {
             await ctx.reply('⚠️ Configuration Error: FRONTEND_URL in .env must be set to your local IP address (e.g., http://192.168.1.5:5173) for Telegram to accept the link.');
             return ctx.scene.leave();
         }
-        await ctx.reply(`🎯 *Swap Summary*:\n\n` +
+        const summaryMsg = await ctx.reply(`🎯 *Swap Summary*:\n\n` +
             `*Sell*: ${state.amount} ${state.inputToken}\n` +
             `*Receive*: ${state.outputToken}\n` +
             `*Privacy*: Vanish Level 3 (Maximum)\n\n` +
@@ -66,10 +66,18 @@ let SwapWizard = class SwapWizard {
                 inline_keyboard: [[
                         {
                             text: '✍️ Sign & Execute',
-                            url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}`
+                            web_app: { url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${0}` }
                         }
                     ]]
             }
+        });
+        await ctx.telegram.editMessageReplyMarkup(ctx.chat?.id, summaryMsg.message_id, undefined, {
+            inline_keyboard: [[
+                    {
+                        text: '✍️ Sign & Execute Move',
+                        web_app: { url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${summaryMsg.message_id}` }
+                    }
+                ]]
         });
         return ctx.scene.leave();
     }

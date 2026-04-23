@@ -35,14 +35,26 @@ export class IntentService {
       },
     });
 
-    // 2. Persist Intent in Database
+    // If it's just a LINK_WALLET action, we are done
+    if (createIntentDto.action === 'LINK_WALLET') {
+        return {
+            status: 'success',
+            message: 'Wallet linked successfully',
+        };
+    }
+
+    // 2. Persist Swap Intent in Database (ensure fields exist)
+    if (!createIntentDto.inputToken || !createIntentDto.outputToken || !createIntentDto.amount) {
+        throw new Error('Missing swap details in intent');
+    }
+
     const intent = await this.prisma.intent.create({
       data: {
         userId: createIntentDto.userId,
         inputToken: createIntentDto.inputToken,
         outputToken: createIntentDto.outputToken,
         amount: createIntentDto.amount,
-        slippage: createIntentDto.slippage,
+        slippage: createIntentDto.slippage ?? 0.5,
         status: 'PENDING',
       },
     });
@@ -50,7 +62,7 @@ export class IntentService {
     // 3. Push to BullMQ for Orchestrator to pick up
     await this.orchestratorService.addIntentToQueue({
       ...createIntentDto,
-      intentId: intent.id // Pass the DB ID for tracking
+      intentId: intent.id
     } as any);
 
     this.logger.log(`Intent ${intent.id} verified and enqueued for user: ${createIntentDto.userId}`);

@@ -20,41 +20,52 @@ let JupiterService = JupiterService_1 = class JupiterService {
     configService;
     logger = new common_1.Logger(JupiterService_1.name);
     apiUrl;
+    apiKey;
     constructor(httpService, configService) {
         this.httpService = httpService;
         this.configService = configService;
         this.apiUrl = this.configService.get('JUPITER_API_URL', 'https://quote-api.jup.ag/v6');
+        this.apiKey = this.configService.getOrThrow('JUPITER_API_KEY');
     }
     async getQuote(inputMint, outputMint, amount, slippageBps = 50) {
         try {
-            this.logger.log(`Fetching quote: ${amount} ${inputMint} -> ${outputMint}`);
+            this.logger.log(`Jupiter: Fetching quote for ${amount} ${inputMint} -> ${outputMint}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`${this.apiUrl}/quote`, {
                 params: {
                     inputMint,
                     outputMint,
-                    amount,
+                    amount: Math.floor(amount).toString(),
                     slippageBps,
+                },
+                headers: {
+                    'x-api-key': this.apiKey,
                 },
             }));
             return response.data;
         }
         catch (error) {
-            this.logger.error(`Failed to fetch quote: ${error.message}`);
+            this.logger.error(`Jupiter Quote failed: ${error.response?.data?.message || error.message}`);
             throw error;
         }
     }
     async getSwapTransaction(quoteResponse, userPublicKey) {
         try {
-            this.logger.log(`Requesting swap transaction for user: ${userPublicKey}`);
+            this.logger.log(`Jupiter: Building swap transaction for ${userPublicKey}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/swap`, {
                 quoteResponse,
                 userPublicKey,
                 wrapAndUnwrapSol: true,
+                dynamicComputeUnitLimit: true,
+                prioritizationFeeLamports: 'auto',
+            }, {
+                headers: {
+                    'x-api-key': this.apiKey,
+                },
             }));
             return response.data;
         }
         catch (error) {
-            this.logger.error(`Failed to get swap transaction: ${error.message}`);
+            this.logger.error(`Jupiter Swap Build failed: ${error.response?.data?.message || error.message}`);
             throw error;
         }
     }

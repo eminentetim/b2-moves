@@ -13,6 +13,8 @@ exports.TelegramUpdate = void 0;
 const nestjs_telegraf_1 = require("nestjs-telegraf");
 const telegraf_1 = require("telegraf");
 const config_1 = require("@nestjs/config");
+const common_1 = require("@nestjs/common");
+const telegram_rate_limiter_guard_1 = require("./telegram-rate-limiter.guard");
 let TelegramUpdate = class TelegramUpdate {
     configService;
     constructor(configService) {
@@ -88,6 +90,7 @@ __decorate([
 ], TelegramUpdate.prototype, "onMessage", null);
 exports.TelegramUpdate = TelegramUpdate = __decorate([
     (0, nestjs_telegraf_1.Update)(),
+    (0, common_1.UseGuards)(telegram_rate_limiter_guard_1.TelegramRateLimiterGuard),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], TelegramUpdate);
 //# sourceMappingURL=telegram.update.js.map

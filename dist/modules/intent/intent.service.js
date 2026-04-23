@@ -78,13 +78,22 @@ let IntentService = IntentService_1 = class IntentService {
                 solanaPublicKey: createIntentDto.publicKey,
             },
         });
+        if (createIntentDto.action === 'LINK_WALLET') {
+            return {
+                status: 'success',
+                message: 'Wallet linked successfully',
+            };
+        }
+        if (!createIntentDto.inputToken || !createIntentDto.outputToken || !createIntentDto.amount) {
+            throw new Error('Missing swap details in intent');
+        }
         const intent = await this.prisma.intent.create({
             data: {
                 userId: createIntentDto.userId,
                 inputToken: createIntentDto.inputToken,
                 outputToken: createIntentDto.outputToken,
                 amount: createIntentDto.amount,
-                slippage: createIntentDto.slippage,
+                slippage: createIntentDto.slippage ?? 0.5,
                 status: 'PENDING',
             },
         });

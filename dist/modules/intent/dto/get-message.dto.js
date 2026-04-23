@@ -9,81 +9,73 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateIntentDto = void 0;
+exports.GetMessageDto = void 0;
 const class_validator_1 = require("class-validator");
-class CreateIntentDto {
+const class_transformer_1 = require("class-transformer");
+class GetMessageDto {
     userId;
+    nonce;
+    publicKey;
     inputToken;
     outputToken;
     amount;
     slippage;
-    deadline;
-    nonce;
-    signature;
-    publicKey;
     action;
     timestamp;
     messageId;
 }
-exports.CreateIntentDto = CreateIntentDto;
+exports.GetMessageDto = GetMessageDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateIntentDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreateIntentDto.prototype, "inputToken", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreateIntentDto.prototype, "outputToken", void 0);
-__decorate([
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], CreateIntentDto.prototype, "amount", void 0);
-__decorate([
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], CreateIntentDto.prototype, "slippage", void 0);
-__decorate([
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], CreateIntentDto.prototype, "deadline", void 0);
+], GetMessageDto.prototype, "userId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateIntentDto.prototype, "nonce", void 0);
+], GetMessageDto.prototype, "nonce", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateIntentDto.prototype, "signature", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateIntentDto.prototype, "publicKey", void 0);
+], GetMessageDto.prototype, "publicKey", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], CreateIntentDto.prototype, "action", void 0);
+], GetMessageDto.prototype, "inputToken", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], CreateIntentDto.prototype, "timestamp", void 0);
+], GetMessageDto.prototype, "outputToken", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseFloat(value)),
     __metadata("design:type", Number)
-], CreateIntentDto.prototype, "messageId", void 0);
-//# sourceMappingURL=create-intent.dto.js.map
+], GetMessageDto.prototype, "amount", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseFloat(value)),
+    __metadata("design:type", Number)
+], GetMessageDto.prototype, "slippage", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], GetMessageDto.prototype, "action", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], GetMessageDto.prototype, "timestamp", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseInt(value)),
+    __metadata("design:type", Number)
+], GetMessageDto.prototype, "messageId", void 0);
+//# sourceMappingURL=get-message.dto.js.map

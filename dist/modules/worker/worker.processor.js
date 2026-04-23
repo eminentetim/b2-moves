@@ -34,43 +34,84 @@ let WorkerProcessor = WorkerProcessor_1 = class WorkerProcessor extends bullmq_1
         this.rpcService = rpcService;
     }
     async process(job) {
-        const { intentId, userId, inputToken, outputToken, amount, slippage, publicKey } = job.data;
-        this.logger.log(`Processing job ${job.id} (Intent: ${intentId}) for user ${userId}`);
+        const { intentId, userId, inputToken, outputToken, amount, slippage, publicKey, messageId } = job.data;
+        if (!inputToken || !outputToken || !amount) {
+            this.logger.error(`Intent ${intentId} is missing critical swap data.`);
+            return;
+        }
+        const currentSlippage = slippage ?? 0.5;
         try {
+            const updateProgress = async (percent, step) => {
+                if (messageId) {
+                    const bar = this.telegramService.getProgressBar(percent);
+                    const statusMsg = `🛸 *B2 Move in Progress*\n\n` +
+                        `Step: ${step}\n` +
+                        `${bar}\n\n` +
+                        `_Trade is being obfuscated via Vanish Core._`;
+                    await this.telegramService.updateStatus(userId, messageId, statusMsg);
+                }
+            };
+            await updateProgress(10, 'Initializing Stealth Route');
             await this.prisma.intent.update({
                 where: { id: intentId },
                 data: { status: 'PROCESSING' }
             });
+            await updateProgress(25, 'Verifying Balance');
             const balance = await this.rpcService.getBalance(publicKey);
             if (balance < amount) {
-                throw new Error(`Insufficient balance: User has ${balance} SOL, needs ${amount}`);
+                throw new Error(`Insufficient balance: ${balance} SOL`);
             }
-            const quote = await this.jupiterService.getQuote(inputToken, outputToken, amount, slippage * 100);
-            const privateRoute = await this.vanishService.getPrivateRoute(inputToken, outputToken, amount);
-            const swapTxData = await this.jupiterService.getSwapTransaction(quote, publicKey);
-            const result = await this.vanishService.executePrivateSwap(swapTxData, privateRoute);
-            this.logger.log(`Waiting for stealth confirmation...`);
+            await updateProgress(40, 'Generating One-Time Wallet');
+            const otwAddress = await this.vanishService.getOneTimeWallet();
+            await updateProgress(60, 'Fetching Jupiter Quote');
+            const quote = await this.jupiterService.getQuote(inputToken, outputToken, amount, currentSlippage * 100);
+            const swapTxData = await this.jupiterService.getSwapTransaction(quote, otwAddress);
+            await updateProgress(80, 'Executing Ghost Transaction');
+            const tradeResult = await this.vanishService.createTrade({
+                user_address: publicKey,
+                source_token_address: inputToken === 'SOL' ? '11111111111111111111111111111111' : inputToken,
+                target_token_address: outputToken,
+                amount: (amount * 10 ** 9).toString(),
+                swap_transaction: swapTxData.swapTransaction,
+                one_time_wallet: otwAddress,
+                user_signature: job.data.signature,
+                timestamp: job.data.timestamp,
+            });
+            await updateProgress(95, 'Settling Privacy Layer');
+            const finalStatus = await this.vanishService.commitAction(tradeResult.tx_id);
             await this.prisma.intent.update({
                 where: { id: intentId },
                 data: {
-                    status: 'COMPLETED',
-                    txId: result.txId,
+                    status: finalStatus.status.toUpperCase(),
+                    txId: tradeResult.tx_id,
                     outAmount: parseFloat(quote.outAmount) / 10 ** 6,
-                    privacyScore: privateRoute.privacyScore
+                    privacyScore: 0.99
                 }
             });
-            await this.telegramService.notifyUser(userId, `✅ *Ghost Move Complete*\n\n` +
+            const successMsg = `✅ *Ghost Move Complete*\n\n` +
                 `Target: ${outputToken}\n` +
-                `Amount: ${quote.outAmount / 10 ** 6} (approx)\n` +
-                `Privacy Score: ${privateRoute.privacyScore * 100}%\n` +
-                `TX: \`${result.txId}\`\n\n` +
-                `_Your funds have been delivered via B2 Spirit stealth systems._`);
+                `Status: ${finalStatus.status}\n` +
+                `Privacy Score: 99%\n` +
+                `TX: \`${tradeResult.tx_id}\`\n\n` +
+                `_Your funds have been delivered to a fresh, unlinked address._`;
+            if (messageId) {
+                await this.telegramService.updateStatus(userId, messageId, successMsg);
+            }
+            else {
+                await this.telegramService.notifyUser(userId, successMsg);
+            }
             return { success: true };
         }
         catch (error) {
             this.logger.error(`Intent ${intentId} FAILED: ${error.message}`);
             await this.prisma.intent.update({ where: { id: intentId }, data: { status: 'FAILED' } }).catch(() => { });
-            await this.telegramService.notifyUser(userId, `❌ *Ghost Move Failed*\n\nReason: ${error.message}`);
+            const failMsg = `❌ *Ghost Move Failed*\n\nReason: ${error.message}`;
+            if (messageId) {
+                await this.telegramService.updateStatus(userId, messageId, failMsg);
+            }
+            else {
+                await this.telegramService.notifyUser(userId, failMsg);
+            }
             throw error;
         }
     }

@@ -1,13 +1,11 @@
-export declare class CreateIntentDto {
+export declare class GetMessageDto {
     userId: string;
+    nonce: string;
+    publicKey: string;
     inputToken?: string;
     outputToken?: string;
     amount?: number;
     slippage?: number;
-    deadline?: number;
-    nonce: string;
-    signature: string;
-    publicKey: string;
     action?: string;
     timestamp?: string;
     messageId?: number;

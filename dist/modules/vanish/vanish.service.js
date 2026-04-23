@@ -24,58 +24,68 @@ let VanishService = VanishService_1 = class VanishService {
     constructor(httpService, configService) {
         this.httpService = httpService;
         this.configService = configService;
-        this.apiUrl = this.configService.get('VANISH_API_URL');
-        this.apiKey = this.configService.get('VANISH_API_KEY');
+        this.apiUrl = this.configService.getOrThrow('VANISH_API_URL');
+        this.apiKey = this.configService.getOrThrow('VANISH_API_KEY');
     }
-    async getPrivateRoute(inputToken, outputToken, amount) {
+    async checkHealth() {
         try {
-            this.logger.log(`Requesting private route from Vanish for ${amount} ${inputToken}`);
-            if (!this.apiUrl) {
-                this.logger.warn('VANISH_API_URL not set, returning mock private route');
-                return {
-                    routeId: `vanish_${Math.random().toString(36).substring(7)}`,
-                    hops: 3,
-                    estimatedLatency: '180ms',
-                    privacyScore: 0.99
-                };
-            }
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/routes`, {
-                inputToken,
-                outputToken,
-                amount,
-            }, {
-                headers: { 'X-API-KEY': this.apiKey }
+            this.logger.log('Checking Vanish API health...');
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`${this.apiUrl}/health`, {
+                headers: { 'x-api-key': this.apiKey },
             }));
             return response.data;
         }
         catch (error) {
-            this.logger.error(`Failed to fetch Vanish route: ${error.message}`);
+            this.logger.error(`Health check failed: ${error.response?.data?.message || error.message}`);
             throw error;
         }
     }
-    async executePrivateSwap(swapTransaction, privateRoute) {
+    async getOneTimeWallet() {
         try {
-            this.logger.log(`Executing private swap via Vanish route: ${privateRoute.routeId}`);
-            if (!this.apiUrl) {
-                this.logger.warn('VANISH_API_URL not set, simulating private execution');
-                return {
-                    txId: `ghost_${Math.random().toString(36).substring(2, 15)}`,
-                    status: 'stealth_confirmed',
-                    outputWallet: 'unlinked_address_generated'
-                };
-            }
-            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/execute`, {
-                swapTransaction,
-                routeId: privateRoute.routeId,
+            this.logger.log('Requesting One-Time Wallet from Vanish...');
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`${this.apiUrl}/trade/one-time-wallet`, {
+                headers: { 'x-api-key': this.apiKey },
+            }));
+            return response.data.address;
+        }
+        catch (error) {
+            this.logger.error(`Failed to get OTW: ${error.response?.data?.message || error.message}`);
+            throw error;
+        }
+    }
+    async createTrade(payload) {
+        try {
+            this.logger.log(`Creating private trade for user: ${payload.user_address}`);
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/trade/create`, {
+                ...payload,
+                loan_additional_sol: '12000000',
+                jito_tip_amount: '1000000',
+                split_repay: 1,
             }, {
-                headers: { 'X-API-KEY': this.apiKey }
+                headers: { 'x-api-key': this.apiKey },
             }));
             return response.data;
         }
         catch (error) {
-            this.logger.error(`Private execution failed: ${error.message}`);
+            this.logger.error(`Trade creation failed: ${error.response?.data?.message || error.message}`);
             throw error;
         }
+    }
+    async commitAction(tx_id) {
+        try {
+            this.logger.log(`Committing transaction: ${tx_id}`);
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/commit`, { tx_id }, {
+                headers: { 'x-api-key': this.apiKey },
+            }));
+            return response.data;
+        }
+        catch (error) {
+            this.logger.error(`Commit failed: ${error.response?.data?.message || error.message}`);
+            throw error;
+        }
+    }
+    generateVanishSignMessage(data) {
+        return `Details: trade:${data.user_address},${data.source_token_address},${data.target_token_address},${data.amount},${data.timestamp}`;
     }
 };
 exports.VanishService = VanishService;

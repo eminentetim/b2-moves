@@ -26,11 +26,31 @@ let TelegramService = TelegramService_1 = class TelegramService {
     async notifyUser(telegramId, message) {
         try {
             this.logger.log(`Sending notification to user: ${telegramId}`);
-            await this.bot.telegram.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
+            return await this.bot.telegram.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
         }
         catch (error) {
             this.logger.error(`Failed to notify user ${telegramId}: ${error.message}`);
         }
+    }
+    async updateStatus(chatId, messageId, message) {
+        try {
+            this.logger.log(`Updating message ${messageId} in chat ${chatId}`);
+            await this.bot.telegram.editMessageText(chatId, messageId, undefined, message, {
+                parse_mode: 'Markdown',
+            });
+        }
+        catch (error) {
+            if (error.message.includes('message is not modified'))
+                return;
+            this.logger.error(`Failed to edit message: ${error.message}`);
+            await this.notifyUser(chatId, message);
+        }
+    }
+    getProgressBar(percent) {
+        const totalBlocks = 10;
+        const filledBlocks = Math.round((percent / 100) * totalBlocks);
+        const emptyBlocks = totalBlocks - filledBlocks;
+        return '🟩'.repeat(filledBlocks) + '⬜'.repeat(emptyBlocks) + ` ${percent}%`;
     }
 };
 exports.TelegramService = TelegramService;
