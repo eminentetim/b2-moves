@@ -37,6 +37,10 @@ export class IntentService {
 
     // If it's just a LINK_WALLET action, we are done
     if (createIntentDto.action === 'LINK_WALLET') {
+        await this.orchestratorService['telegramService'].notifyUser(
+            createIntentDto.userId, 
+            `🛡️ *Stealth Activation Confirmed*\n\nYour identity is now linked to: \`${createIntentDto.publicKey}\`\n\nYou are ready to move in silence. Use /swap to begin.`
+        );
         return {
             status: 'success',
             message: 'Wallet linked successfully',

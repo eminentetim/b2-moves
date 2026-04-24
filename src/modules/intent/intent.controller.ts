@@ -2,7 +2,6 @@ import { Controller, Post, Get, Query, Body, HttpCode, HttpStatus, Logger } from
 import { IntentService } from './intent.service';
 import { IntentUtility } from './intent.utility';
 import { CreateIntentDto } from './dto/create-intent.dto';
-import { GetMessageDto } from './dto/get-message.dto';
 
 @Controller('intent')
 export class IntentController {
@@ -21,22 +20,30 @@ export class IntentController {
   }
 
   @Get('message')
-  async getMessage(@Query() query: GetMessageDto) {
-    this.logger.log(`Received GET /intent/message. Query: ${JSON.stringify(query)}`);
-    
-    // Generate a fixed timestamp for this signature request
-    const timestamp = Date.now().toString();
-    
-    const message = this.utility.createSignableMessage({
-        ...query,
-        timestamp,
-    });
+  async getMessage(@Query() query: any) {
+    try {
+      this.logger.log(`Received GET /intent/message. Query: ${JSON.stringify(query)}`);
+      
+      const timestamp = query.timestamp || Date.now().toString();
+      
+      const message = this.utility.createSignableMessage({
+          ...query,
+          timestamp,
+      });
 
-    this.logger.log(`Generated message: ${message}`);
+      this.logger.log(`Generated message: ${message}`);
 
-    return {
-      message: message,
-      timestamp: timestamp, // Return it so frontend can send it back in POST
-    };
+      return {
+        message: message,
+        timestamp: timestamp,
+      };
+    } catch (error) {
+      this.logger.error(`Internal Error: ${error.message}`);
+      return {
+          message: `Details: trade:error,${Date.now()}`,
+          timestamp: Date.now().toString(),
+          error: error.message
+      };
+    }
   }
 }

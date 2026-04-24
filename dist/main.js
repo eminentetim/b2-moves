@@ -41,6 +41,13 @@ const app_module_1 = require("./app.module");
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const server = app.getHttpAdapter().getInstance();
+    server.use((req, res, next) => {
+        if (!req.url.includes('assets') && !req.url.includes('.js') && !req.url.includes('.css')) {
+            console.log(`[RAW HTTP] ${req.method} ${req.url}`);
+        }
+        next();
+    });
     app.enableCors({
         origin: '*',
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -48,17 +55,14 @@ async function bootstrap() {
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
-        forbidNonWhitelisted: true,
+        forbidNonWhitelisted: false,
         transform: true,
-        exceptionFactory: (errors) => {
-            logger.error(`Validation Failed: ${JSON.stringify(errors)}`);
-            return errors;
-        }
     }));
     const port = process.env.PORT ?? 3000;
     await app.listen(port);
-    console.log(`\n🚀 B2 Moves Backend is LIVE on port ${port}`);
-    console.log(`👉 Watch this terminal for logs when you click the button in Telegram.\n`);
+    console.log(`\n🛸 B2 MOVES LOGGING ACTIVATED`);
+    console.log(`---------------------------------`);
+    console.log(`Your server is waiting for a request...`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

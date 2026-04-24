@@ -1,6 +1,5 @@
-import { AppService } from './app.service';
+import * as express from 'express';
 export declare class AppController {
-    private readonly appService;
-    constructor(appService: AppService);
-    getHello(): string;
+    getHome(res: express.Response): void;
+    handleDeepLinks(res: express.Response): void;
 }

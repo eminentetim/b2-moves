@@ -24,7 +24,7 @@ import { RpcModule } from './modules/rpc/rpc.module';
     PrismaModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), '..', 'b2-signer', 'dist'),
-      exclude: ['/intent/(.*)', '/status/(.*)'],
+      exclude: ['/intent*'],
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -59,8 +59,8 @@ export class AppModule implements NestModule {
     consumer
       .apply((req, res, next) => {
         const logger = new Logger('HTTP');
-        if (!req.url.includes('assets')) {
-            logger.log(`${req.method} ${req.url}`);
+        if (!req.url.includes('.')) {
+            logger.log(`[${req.method}] ${req.url}`);
         }
         next();
       })

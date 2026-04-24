@@ -29,8 +29,8 @@ let AppModule = class AppModule {
         consumer
             .apply((req, res, next) => {
             const logger = new common_1.Logger('HTTP');
-            if (!req.url.includes('assets')) {
-                logger.log(`${req.method} ${req.url}`);
+            if (!req.url.includes('.')) {
+                logger.log(`[${req.method}] ${req.url}`);
             }
             next();
         })
@@ -47,7 +47,7 @@ exports.AppModule = AppModule = __decorate([
             prisma_module_1.PrismaModule,
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(process.cwd(), '..', 'b2-signer', 'dist'),
-                exclude: ['/intent/(.*)', '/status/(.*)'],
+                exclude: ['/intent*'],
             }),
             bullmq_1.BullModule.forRootAsync({
                 inject: [config_1.ConfigService],
