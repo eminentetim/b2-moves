@@ -2,18 +2,22 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class IntentUtility {
+  // Protocol Constants from Vanish docs
+  private readonly LOAN_SOL = '12000000'; // 0.012 SOL
+  private readonly JITO_TIP = '1000000';  // 0.001 SOL
+  private readonly TOS_PREFIX = "By signing, I hereby agree to Vanish's Terms of Service and agree to be bound by them (docs.vanish.trade/legal/TOS)\n\n";
+
   /**
    * Creates the exact string required by Vanish Core for private trades.
-   * Format: Details: trade:<user>,<in>,<out>,<amount>,<timestamp>
    */
   createVanishTradeMessage(data: {
-    user_address: string;
     source_token_address: string;
     target_token_address: string;
     amount: string;
     timestamp: string;
   }): string {
-    return `Details: trade:${data.user_address},${data.source_token_address},${data.target_token_address},${data.amount},${data.timestamp}`;
+    const details = `Details: trade:${data.source_token_address}:${data.target_token_address}:${data.amount}:${this.LOAN_SOL}:${data.timestamp}:${this.JITO_TIP}`;
+    return this.TOS_PREFIX + details;
   }
 
   /**
@@ -22,18 +26,31 @@ export class IntentUtility {
   createSignableMessage(intentData: any): string {
     const { signature, publicKey, messageId, timestamp, ...data } = intentData;
     
-    // If it's a swap intent, we use the Vanish format
+    // If it's a swap intent, we use the STRICT Vanish format
     if (data.inputToken && data.outputToken && data.amount && timestamp) {
+        // SOL ADDRESS NORMALIZATION (Force 32 ones for Vanish signature)
+        const normalize = (mint: string) => {
+            if (mint === 'SOL' || mint === 'So11111111111111111111111111111111111111112') {
+                return '11111111111111111111111111111111';
+            }
+            return mint;
+        };
+
+        const source = normalize(data.inputToken);
+        const target = normalize(data.outputToken);
+        
+        const isSol = source === '11111111111111111111111111111111';
+        const decimals = isSol ? 9 : 6;
+        const rawAmount = Math.floor(data.amount * Math.pow(10, decimals)).toString();
+
         return this.createVanishTradeMessage({
-            user_address: publicKey,
-            source_token_address: data.inputToken === 'SOL' ? '11111111111111111111111111111111' : data.inputToken,
-            target_token_address: data.outputToken,
-            amount: (data.amount * 10**9).toString(),
+            source_token_address: source,
+            target_token_address: target,
+            amount: rawAmount,
             timestamp: timestamp.toString(),
         });
     }
 
-    // Default sorting for other metadata
     const sortedData = Object.keys(data)
       .sort()
       .reduce((obj, key) => {

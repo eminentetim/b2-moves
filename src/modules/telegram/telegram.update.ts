@@ -1,21 +1,25 @@
 import { Update, Start, Help, On, Command } from 'nestjs-telegraf';
 import { Context, Scenes } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, Logger } from '@nestjs/common';
 import { TelegramRateLimiterGuard } from './telegram-rate-limiter.guard';
 
 @Update()
 @UseGuards(TelegramRateLimiterGuard)
 export class TelegramUpdate {
+  private readonly logger = new Logger('TelegramBot');
+
   constructor(private readonly configService: ConfigService) {}
 
   @Start()
   async onStart(ctx: Scenes.SceneContext) {
+    this.logger.log(`Received /start from user ${ctx.from?.id}`);
     await ctx.scene.enter('onboarding-wizard');
   }
 
   @Help()
   async onHelp(ctx: Context) {
+    this.logger.log(`Received /help from user ${ctx.from?.id}`);
     await ctx.reply(
       'B2 Moves allows you to swap Solana tokens without linkability.\n\n' +
       'How it works:\n' +
@@ -28,11 +32,13 @@ export class TelegramUpdate {
 
   @Command('swap')
   async onSwap(ctx: Scenes.SceneContext) {
+    this.logger.log(`Received /swap from user ${ctx.from?.id}`);
     await ctx.scene.enter('swap-wizard');
   }
 
   @Command('link')
   async onLink(ctx: Context) {
+    this.logger.log(`Received /link from user ${ctx.from?.id}`);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     
     await ctx.reply(
@@ -57,9 +63,8 @@ export class TelegramUpdate {
 
   @On('text')
   async onMessage(ctx: Context) {
-    // Basic catch-all for text messages
     if (ctx.message && 'text' in ctx.message) {
-        // Handle conversational flow here
+        this.logger.log(`Received message from ${ctx.from?.id}: ${ctx.message.text}`);
     }
   }
 }

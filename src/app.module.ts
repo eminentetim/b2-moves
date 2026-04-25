@@ -5,6 +5,7 @@ import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import * as https from 'https';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { IntentModule } from './modules/intent/intent.module';
@@ -41,6 +42,14 @@ import { RpcModule } from './modules/rpc/rpc.module';
         token: configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN'),
         middlewares: [session()],
         include: [TelegramModule],
+        options: {
+            telegram: {
+                agent: new https.Agent({
+                    keepAlive: true,
+                    timeout: 30000,
+                }),
+            },
+        },
       }),
     }),
     IntentModule,
@@ -59,8 +68,8 @@ export class AppModule implements NestModule {
     consumer
       .apply((req, res, next) => {
         const logger = new Logger('HTTP');
-        if (!req.url.includes('.')) {
-            logger.log(`[${req.method}] ${req.url}`);
+        if (!req.url.includes('.') && !req.url.includes('assets')) {
+            logger.log(`Incoming Request: ${req.method} ${req.url}`);
         }
         next();
       })

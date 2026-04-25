@@ -1,6 +1,7 @@
 import { IntentService } from './intent.service';
 import { IntentUtility } from './intent.utility';
 import { CreateIntentDto } from './dto/create-intent.dto';
+import { GetMessageDto } from './dto/get-message.dto';
 export declare class IntentController {
     private readonly intentService;
     private readonly utility;
@@ -17,13 +18,8 @@ export declare class IntentController {
         message: string;
         nonce: string;
     }>;
-    getMessage(query: any): Promise<{
-        message: string;
-        timestamp: any;
-        error?: undefined;
-    } | {
+    getMessage(query: GetMessageDto): Promise<{
         message: string;
         timestamp: string;
-        error: any;
     }>;
 }

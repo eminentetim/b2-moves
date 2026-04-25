@@ -18,6 +18,7 @@ const common_1 = require("@nestjs/common");
 const intent_service_1 = require("./intent.service");
 const intent_utility_1 = require("./intent.utility");
 const create_intent_dto_1 = require("./dto/create-intent.dto");
+const get_message_dto_1 = require("./dto/get-message.dto");
 let IntentController = IntentController_1 = class IntentController {
     intentService;
     utility;
@@ -33,11 +34,14 @@ let IntentController = IntentController_1 = class IntentController {
     async getMessage(query) {
         try {
             this.logger.log(`Received GET /intent/message. Query: ${JSON.stringify(query)}`);
-            const timestamp = query.timestamp || Date.now().toString();
+            const timestamp = Date.now().toString();
             const message = this.utility.createSignableMessage({
                 ...query,
                 timestamp,
             });
+            if (!message) {
+                throw new Error('Utility failed to generate message string');
+            }
             this.logger.log(`Generated message: ${message}`);
             return {
                 message: message,
@@ -45,12 +49,8 @@ let IntentController = IntentController_1 = class IntentController {
             };
         }
         catch (error) {
-            this.logger.error(`Internal Error: ${error.message}`);
-            return {
-                message: `Details: trade:error,${Date.now()}`,
-                timestamp: Date.now().toString(),
-                error: error.message
-            };
+            this.logger.error(`Failed to generate signable message: ${error.message}`);
+            throw error;
         }
     }
 };
@@ -67,7 +67,7 @@ __decorate([
     (0, common_1.Get)('message'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [get_message_dto_1.GetMessageDto]),
     __metadata("design:returntype", Promise)
 ], IntentController.prototype, "getMessage", null);
 exports.IntentController = IntentController = IntentController_1 = __decorate([

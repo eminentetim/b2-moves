@@ -23,16 +23,21 @@ let TelegramService = TelegramService_1 = class TelegramService {
     constructor(bot) {
         this.bot = bot;
     }
-    async notifyUser(telegramId, message) {
+    async notifyUser(telegramId, message, retries = 2) {
         try {
             this.logger.log(`Sending notification to user: ${telegramId}`);
             return await this.bot.telegram.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
         }
         catch (error) {
+            if (retries > 0) {
+                this.logger.warn(`Failed to notify user, retrying... (${retries} left)`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return this.notifyUser(telegramId, message, retries - 1);
+            }
             this.logger.error(`Failed to notify user ${telegramId}: ${error.message}`);
         }
     }
-    async updateStatus(chatId, messageId, message) {
+    async updateStatus(chatId, messageId, message, retries = 2) {
         try {
             this.logger.log(`Updating message ${messageId} in chat ${chatId}`);
             await this.bot.telegram.editMessageText(chatId, messageId, undefined, message, {
@@ -42,8 +47,12 @@ let TelegramService = TelegramService_1 = class TelegramService {
         catch (error) {
             if (error.message.includes('message is not modified'))
                 return;
+            if (retries > 0) {
+                this.logger.warn(`Failed to edit message, retrying... (${retries} left)`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return this.updateStatus(chatId, messageId, message, retries - 1);
+            }
             this.logger.error(`Failed to edit message: ${error.message}`);
-            await this.notifyUser(chatId, message);
         }
     }
     getProgressBar(percent) {

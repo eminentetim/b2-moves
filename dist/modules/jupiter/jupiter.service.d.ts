@@ -7,6 +7,6 @@ export declare class JupiterService {
     private readonly apiUrl;
     private readonly apiKey;
     constructor(httpService: HttpService, configService: ConfigService);
-    getQuote(inputMint: string, outputMint: string, amount: number, slippageBps?: number): Promise<any>;
+    getQuote(inputMint: string, outputMint: string, amountRaw: string, slippageBps?: number): Promise<any>;
     getSwapTransaction(quoteResponse: any, userPublicKey: string): Promise<any>;
 }

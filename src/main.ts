@@ -9,7 +9,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
   
-  // RAW EXPRESS LOGGER - This catches EVERYTHING before NestJS handles it
+  // RAW EXPRESS LOGGER
   const server = app.getHttpAdapter().getInstance();
   server.use((req, res, next) => {
     if (!req.url.includes('assets') && !req.url.includes('.js') && !req.url.includes('.css')) {
@@ -35,8 +35,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   
-  console.log(`\n🛸 B2 MOVES LOGGING ACTIVATED`);
-  console.log(`---------------------------------`);
-  console.log(`Your server is waiting for a request...`);
+  console.log(`\n🛸 B2 MOVES: BACKEND ACTIVE`);
+  console.log(`🚀 Server LIVE on port ${port}`);
 }
 bootstrap();

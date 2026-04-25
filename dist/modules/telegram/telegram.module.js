@@ -12,11 +12,13 @@ const telegram_service_1 = require("./telegram.service");
 const telegram_update_1 = require("./telegram.update");
 const swap_wizard_1 = require("./swap.wizard");
 const onboarding_wizard_1 = require("./onboarding.wizard");
+const rpc_module_1 = require("../rpc/rpc.module");
 let TelegramModule = class TelegramModule {
 };
 exports.TelegramModule = TelegramModule;
 exports.TelegramModule = TelegramModule = __decorate([
     (0, common_1.Module)({
+        imports: [rpc_module_1.RpcModule],
         providers: [telegram_service_1.TelegramService, telegram_update_1.TelegramUpdate, swap_wizard_1.SwapWizard, onboarding_wizard_1.OnboardingWizard],
         exports: [telegram_service_1.TelegramService],
     })

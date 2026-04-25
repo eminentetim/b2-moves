@@ -60,9 +60,8 @@ async function bootstrap() {
     }));
     const port = process.env.PORT ?? 3000;
     await app.listen(port);
-    console.log(`\n🛸 B2 MOVES LOGGING ACTIVATED`);
-    console.log(`---------------------------------`);
-    console.log(`Your server is waiting for a request...`);
+    console.log(`\n🛸 B2 MOVES: BACKEND ACTIVE`);
+    console.log(`🚀 Server LIVE on port ${port}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

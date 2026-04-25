@@ -17,13 +17,16 @@ const common_1 = require("@nestjs/common");
 const telegram_rate_limiter_guard_1 = require("./telegram-rate-limiter.guard");
 let TelegramUpdate = class TelegramUpdate {
     configService;
+    logger = new common_1.Logger('TelegramBot');
     constructor(configService) {
         this.configService = configService;
     }
     async onStart(ctx) {
+        this.logger.log(`Received /start from user ${ctx.from?.id}`);
         await ctx.scene.enter('onboarding-wizard');
     }
     async onHelp(ctx) {
+        this.logger.log(`Received /help from user ${ctx.from?.id}`);
         await ctx.reply('B2 Moves allows you to swap Solana tokens without linkability.\n\n' +
             'How it works:\n' +
             '1. Define your swap (/swap)\n' +
@@ -32,9 +35,11 @@ let TelegramUpdate = class TelegramUpdate {
             '4. Receive tokens at a fresh, unlinked address.');
     }
     async onSwap(ctx) {
+        this.logger.log(`Received /swap from user ${ctx.from?.id}`);
         await ctx.scene.enter('swap-wizard');
     }
     async onLink(ctx) {
+        this.logger.log(`Received /link from user ${ctx.from?.id}`);
         const frontendUrl = this.configService.get('FRONTEND_URL');
         await ctx.reply('🛸 *B2 Onboarding: Stealth Activation*\n\n' +
             'To execute private intents, you must link your Solana identity.\n\n' +
@@ -54,6 +59,7 @@ let TelegramUpdate = class TelegramUpdate {
     }
     async onMessage(ctx) {
         if (ctx.message && 'text' in ctx.message) {
+            this.logger.log(`Received message from ${ctx.from?.id}: ${ctx.message.text}`);
         }
     }
 };

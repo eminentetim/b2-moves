@@ -25,8 +25,7 @@ let RpcService = RpcService_1 = class RpcService {
     }
     onModuleInit() {
         const urls = [
-            this.configService.get('HELIUS_GATEKEEPER_RPC'),
-            this.configService.get('HELIUS_STANDARD_RPC'),
+            'https://api.devnet.solana.com',
             this.configService.get('SOLANA_QUICKNODE_RPC'),
             this.configService.get('SOLANA_RPC_URL'),
             'https://api.mainnet-beta.solana.com'
@@ -49,6 +48,29 @@ let RpcService = RpcService_1 = class RpcService {
             }
         }
         throw new Error('All RPC providers failed to fetch balance.');
+    }
+    async getTokensForWallet(publicKey) {
+        try {
+            const pubkey = new web3_js_1.PublicKey(publicKey);
+            const accounts = await this.getConnection().getParsedTokenAccountsByOwner(pubkey, {
+                programId: new web3_js_1.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+            });
+            const tokens = accounts.value
+                .map((account) => {
+                const info = account.account.data.parsed.info;
+                return {
+                    mint: info.mint,
+                    amount: info.tokenAmount.uiAmount,
+                    decimals: info.tokenAmount.decimals,
+                };
+            })
+                .filter((t) => t.amount > 0);
+            return tokens;
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch tokens: ${error.message}`);
+            return [];
+        }
     }
     async getLatestBlockhash() {
         return this.getConnection().getLatestBlockhash(this.commitment);

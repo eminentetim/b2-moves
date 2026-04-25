@@ -2,6 +2,7 @@ import { Controller, Post, Get, Query, Body, HttpCode, HttpStatus, Logger } from
 import { IntentService } from './intent.service';
 import { IntentUtility } from './intent.utility';
 import { CreateIntentDto } from './dto/create-intent.dto';
+import { GetMessageDto } from './dto/get-message.dto';
 
 @Controller('intent')
 export class IntentController {
@@ -20,16 +21,21 @@ export class IntentController {
   }
 
   @Get('message')
-  async getMessage(@Query() query: any) {
+  async getMessage(@Query() query: GetMessageDto) {
     try {
       this.logger.log(`Received GET /intent/message. Query: ${JSON.stringify(query)}`);
       
-      const timestamp = query.timestamp || Date.now().toString();
+      // VANISH FIX: Must use Milliseconds (string)
+      const timestamp = Date.now().toString();
       
       const message = this.utility.createSignableMessage({
           ...query,
           timestamp,
       });
+
+      if (!message) {
+        throw new Error('Utility failed to generate message string');
+      }
 
       this.logger.log(`Generated message: ${message}`);
 
@@ -38,12 +44,8 @@ export class IntentController {
         timestamp: timestamp,
       };
     } catch (error) {
-      this.logger.error(`Internal Error: ${error.message}`);
-      return {
-          message: `Details: trade:error,${Date.now()}`,
-          timestamp: Date.now().toString(),
-          error: error.message
-      };
+      this.logger.error(`Failed to generate signable message: ${error.message}`);
+      throw error;
     }
   }
 }

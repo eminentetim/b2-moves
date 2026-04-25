@@ -3,8 +3,10 @@ import { TelegramService } from './telegram.service';
 import { TelegramUpdate } from './telegram.update';
 import { SwapWizard } from './swap.wizard';
 import { OnboardingWizard } from './onboarding.wizard';
+import { RpcModule } from '../rpc/rpc.module';
 
 @Module({
+  imports: [RpcModule],
   providers: [TelegramService, TelegramUpdate, SwapWizard, OnboardingWizard],
   exports: [TelegramService],
 })

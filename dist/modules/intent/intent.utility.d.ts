@@ -1,6 +1,8 @@
 export declare class IntentUtility {
+    private readonly LOAN_SOL;
+    private readonly JITO_TIP;
+    private readonly TOS_PREFIX;
     createVanishTradeMessage(data: {
-        user_address: string;
         source_token_address: string;
         target_token_address: string;
         amount: string;

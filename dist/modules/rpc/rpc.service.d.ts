@@ -10,6 +10,7 @@ export declare class RpcService implements OnModuleInit {
     onModuleInit(): void;
     getConnection(): Connection;
     getBalance(publicKey: string): Promise<number>;
+    getTokensForWallet(publicKey: string): Promise<any[]>;
     getLatestBlockhash(): Promise<Readonly<{
         blockhash: import("@solana/web3.js").Blockhash;
         lastValidBlockHeight: number;
