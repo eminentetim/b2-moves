@@ -1,5 +1,6 @@
 import { WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import { ConfigService } from '@nestjs/config';
 import { CreateIntentDto } from '../intent/dto/create-intent.dto';
 import { JupiterService } from '../jupiter/jupiter.service';
 import { VanishService } from '../vanish/vanish.service';
@@ -15,8 +16,9 @@ export declare class WorkerProcessor extends WorkerHost {
     private readonly prisma;
     private readonly telegramService;
     private readonly rpcService;
+    private readonly configService;
     private readonly logger;
-    constructor(jupiterService: JupiterService, vanishService: VanishService, prisma: PrismaService, telegramService: TelegramService, rpcService: RpcService);
+    constructor(jupiterService: JupiterService, vanishService: VanishService, prisma: PrismaService, telegramService: TelegramService, rpcService: RpcService, configService: ConfigService);
     process(job: Job<ExtendedIntentDto, any, string>): Promise<any>;
 }
 export {};

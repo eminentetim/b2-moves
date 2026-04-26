@@ -3,5 +3,5 @@ export declare const TOKENS: {
     readonly USDC_MAINNET: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     readonly USDT_MAINNET: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
     readonly USDC_DEVNET: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
-    readonly USDT_DEVNET: "EJwFButaRsWvD2Du6QCqyGCvQssNU8YJ65Xxu8Y17jCj";
+    readonly USDT_DEVNET: "EJwZTVvW7zV7uMvS6S6S6S6S6S6S6S6S6S6S6S6S6S6";
 };

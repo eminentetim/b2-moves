@@ -47,7 +47,7 @@ export class IntentService {
         };
     }
 
-    // 2. Persist Swap Intent in Database (ensure fields exist)
+    // 2. Persist Swap Intent in Database
     if (!createIntentDto.inputToken || !createIntentDto.outputToken || !createIntentDto.amount) {
         throw new Error('Missing swap details in intent');
     }
@@ -84,7 +84,11 @@ export class IntentService {
       
       const messageString = this.utility.createSignableMessage(dto);
       const messageUint8 = new TextEncoder().encode(messageString);
-      const signatureUint8 = bs58.decode(signature);
+      
+      // FIX: Decode signature as Base64 (matches updated frontend)
+      const signatureUint8 = Buffer.from(signature, 'base64');
+      
+      // PublicKey is still Base58
       const publicKeyUint8 = bs58.decode(publicKey);
 
       return nacl.sign.detached.verify(

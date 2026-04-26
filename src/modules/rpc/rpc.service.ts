@@ -34,6 +34,29 @@ export class RpcService implements OnModuleInit {
     return this.connections[0];
   }
 
+  async getTokensForWallet(publicKey: string): Promise<any[]> {
+    try {
+      const pubkey = new PublicKey(publicKey);
+      const accounts = await this.getConnection().getParsedTokenAccountsByOwner(pubkey, {
+        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+      });
+
+      return accounts.value
+        .map((account) => {
+          const info = account.account.data.parsed.info;
+          return {
+            mint: info.mint,
+            amount: info.tokenAmount.uiAmount,
+            decimals: info.tokenAmount.decimals,
+          };
+        })
+        .filter((t) => t.amount > 0);
+    } catch (error) {
+      this.logger.error(`Failed to fetch tokens: ${error.message}`);
+      return [];
+    }
+  }
+
   /**
    * Robust balance check with multi-tier failover.
    */
@@ -47,31 +70,6 @@ export class RpcService implements OnModuleInit {
       }
     }
     throw new Error('All RPC providers failed to fetch balance.');
-  }
-
-  async getTokensForWallet(publicKey: string): Promise<any[]> {
-    try {
-      const pubkey = new PublicKey(publicKey);
-      const accounts = await this.getConnection().getParsedTokenAccountsByOwner(pubkey, {
-        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-      });
-
-      const tokens = accounts.value
-        .map((account) => {
-          const info = account.account.data.parsed.info;
-          return {
-            mint: info.mint,
-            amount: info.tokenAmount.uiAmount,
-            decimals: info.tokenAmount.decimals,
-          };
-        })
-        .filter((t) => t.amount > 0);
-
-      return tokens;
-    } catch (error) {
-      this.logger.error(`Failed to fetch tokens: ${error.message}`);
-      return [];
-    }
   }
 
   async getLatestBlockhash() {

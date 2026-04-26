@@ -37,6 +37,28 @@ let RpcService = RpcService_1 = class RpcService {
     getConnection() {
         return this.connections[0];
     }
+    async getTokensForWallet(publicKey) {
+        try {
+            const pubkey = new web3_js_1.PublicKey(publicKey);
+            const accounts = await this.getConnection().getParsedTokenAccountsByOwner(pubkey, {
+                programId: new web3_js_1.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+            });
+            return accounts.value
+                .map((account) => {
+                const info = account.account.data.parsed.info;
+                return {
+                    mint: info.mint,
+                    amount: info.tokenAmount.uiAmount,
+                    decimals: info.tokenAmount.decimals,
+                };
+            })
+                .filter((t) => t.amount > 0);
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch tokens: ${error.message}`);
+            return [];
+        }
+    }
     async getBalance(publicKey) {
         for (const conn of this.connections) {
             try {
@@ -48,29 +70,6 @@ let RpcService = RpcService_1 = class RpcService {
             }
         }
         throw new Error('All RPC providers failed to fetch balance.');
-    }
-    async getTokensForWallet(publicKey) {
-        try {
-            const pubkey = new web3_js_1.PublicKey(publicKey);
-            const accounts = await this.getConnection().getParsedTokenAccountsByOwner(pubkey, {
-                programId: new web3_js_1.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-            });
-            const tokens = accounts.value
-                .map((account) => {
-                const info = account.account.data.parsed.info;
-                return {
-                    mint: info.mint,
-                    amount: info.tokenAmount.uiAmount,
-                    decimals: info.tokenAmount.decimals,
-                };
-            })
-                .filter((t) => t.amount > 0);
-            return tokens;
-        }
-        catch (error) {
-            this.logger.error(`Failed to fetch tokens: ${error.message}`);
-            return [];
-        }
     }
     async getLatestBlockhash() {
         return this.getConnection().getLatestBlockhash(this.commitment);

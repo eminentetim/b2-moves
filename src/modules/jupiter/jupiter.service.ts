@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import * as dns from 'node:dns';
+import { TOKENS } from '../../common/constants/tokens';
 
 @Injectable()
 export class JupiterService {
@@ -15,27 +16,28 @@ export class JupiterService {
     private readonly configService: ConfigService,
   ) {
     dns.setDefaultResultOrder('ipv4first');
-    this.apiUrl = this.configService.get<string>('JUPITER_API_URL', 'https://preprod-quote-api.jup.ag');
+    // V1 is the standard for 2026
+    this.apiUrl = this.configService.get<string>('JUPITER_API_URL', 'https://api.jup.ag/swap/v1');
     this.apiKey = this.configService.getOrThrow<string>('JUPITER_API_KEY');
   }
 
   async getQuote(inputMint: string, outputMint: string, amountRaw: string, slippageBps: number = 50) {
-    // DEVNET FIX: Preprod uses /quote directly
-    const url = `${this.apiUrl}/quote`;
+    const isMainnet = this.configService.get<string>('SOLANA_CLUSTER') !== 'devnet';
     
-    const cleanInput = inputMint.toString().trim();
-    const cleanOutput = outputMint.toString().trim();
-    const cleanAmount = amountRaw.toString().trim();
+    // Auto-resolve symbols to cluster-specific mints
+    const resolvedInput = this.resolveMint(inputMint, isMainnet);
+    const resolvedOutput = this.resolveMint(outputMint, isMainnet);
 
+    const url = `${this.apiUrl}/quote`;
     const params = {
-        inputMint: cleanInput,
-        outputMint: cleanOutput,
-        amount: cleanAmount,
+        inputMint: resolvedInput,
+        outputMint: resolvedOutput,
+        amount: amountRaw,
         slippageBps,
     };
 
     try {
-      this.logger.log(`🔍 Jupiter Devnet Request: ${cleanInput.substring(0, 8)}... -> ${cleanOutput.substring(0, 8)}... (${cleanAmount})`);
+      this.logger.log(`🔍 Jupiter Request (${isMainnet ? 'Mainnet' : 'Devnet'}): ${JSON.stringify(params)}`);
       
       const response = await firstValueFrom(
         this.httpService.get(url, {
@@ -56,8 +58,6 @@ export class JupiterService {
   async getSwapTransaction(quoteResponse: any, userPublicKey: string) {
     try {
       this.logger.log(`Jupiter: Building swap transaction for ${userPublicKey}`);
-      
-      // DEVNET FIX: Preprod uses /swap directly
       const response = await firstValueFrom(
         this.httpService.post(
           `${this.apiUrl}/swap`,
@@ -73,7 +73,6 @@ export class JupiterService {
           },
         ),
       );
-
       return response.data;
     } catch (error) {
       if (error.response) {
@@ -81,5 +80,13 @@ export class JupiterService {
       }
       throw error;
     }
+  }
+
+  private resolveMint(token: string, isMainnet: boolean): string {
+      const trimmed = token.trim();
+      if (trimmed === 'SOL' || trimmed.includes('So111')) return TOKENS.SOL;
+      if (trimmed === 'USDC') return isMainnet ? TOKENS.USDC_MAINNET : TOKENS.USDC_DEVNET;
+      if (trimmed === 'USDT') return isMainnet ? TOKENS.USDT_MAINNET : TOKENS.USDT_DEVNET;
+      return trimmed;
   }
 }

@@ -9,8 +9,8 @@ export declare class RpcService implements OnModuleInit {
     constructor(configService: ConfigService);
     onModuleInit(): void;
     getConnection(): Connection;
-    getBalance(publicKey: string): Promise<number>;
     getTokensForWallet(publicKey: string): Promise<any[]>;
+    getBalance(publicKey: string): Promise<number>;
     getLatestBlockhash(): Promise<Readonly<{
         blockhash: import("@solana/web3.js").Blockhash;
         lastValidBlockHeight: number;

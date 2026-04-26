@@ -115,7 +115,7 @@ let IntentService = IntentService_1 = class IntentService {
             const { signature, publicKey } = dto;
             const messageString = this.utility.createSignableMessage(dto);
             const messageUint8 = new TextEncoder().encode(messageString);
-            const signatureUint8 = bs58_1.default.decode(signature);
+            const signatureUint8 = Buffer.from(signature, 'base64');
             const publicKeyUint8 = bs58_1.default.decode(publicKey);
             return nacl.sign.detached.verify(messageUint8, signatureUint8, publicKeyUint8);
         }

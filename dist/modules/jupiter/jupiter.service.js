@@ -49,6 +49,7 @@ const axios_1 = require("@nestjs/axios");
 const config_1 = require("@nestjs/config");
 const rxjs_1 = require("rxjs");
 const dns = __importStar(require("node:dns"));
+const tokens_1 = require("../../common/constants/tokens");
 let JupiterService = JupiterService_1 = class JupiterService {
     httpService;
     configService;
@@ -59,22 +60,22 @@ let JupiterService = JupiterService_1 = class JupiterService {
         this.httpService = httpService;
         this.configService = configService;
         dns.setDefaultResultOrder('ipv4first');
-        this.apiUrl = this.configService.get('JUPITER_API_URL', 'https://preprod-quote-api.jup.ag');
+        this.apiUrl = this.configService.get('JUPITER_API_URL', 'https://api.jup.ag/swap/v1');
         this.apiKey = this.configService.getOrThrow('JUPITER_API_KEY');
     }
     async getQuote(inputMint, outputMint, amountRaw, slippageBps = 50) {
+        const isMainnet = this.configService.get('SOLANA_CLUSTER') !== 'devnet';
+        const resolvedInput = this.resolveMint(inputMint, isMainnet);
+        const resolvedOutput = this.resolveMint(outputMint, isMainnet);
         const url = `${this.apiUrl}/quote`;
-        const cleanInput = inputMint.toString().trim();
-        const cleanOutput = outputMint.toString().trim();
-        const cleanAmount = amountRaw.toString().trim();
         const params = {
-            inputMint: cleanInput,
-            outputMint: cleanOutput,
-            amount: cleanAmount,
+            inputMint: resolvedInput,
+            outputMint: resolvedOutput,
+            amount: amountRaw,
             slippageBps,
         };
         try {
-            this.logger.log(`🔍 Jupiter Devnet Request: ${cleanInput.substring(0, 8)}... -> ${cleanOutput.substring(0, 8)}... (${cleanAmount})`);
+            this.logger.log(`🔍 Jupiter Request (${isMainnet ? 'Mainnet' : 'Devnet'}): ${JSON.stringify(params)}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(url, {
                 params,
                 headers: { 'x-api-key': this.apiKey },
@@ -108,6 +109,16 @@ let JupiterService = JupiterService_1 = class JupiterService {
             }
             throw error;
         }
+    }
+    resolveMint(token, isMainnet) {
+        const trimmed = token.trim();
+        if (trimmed === 'SOL' || trimmed.includes('So111'))
+            return tokens_1.TOKENS.SOL;
+        if (trimmed === 'USDC')
+            return isMainnet ? tokens_1.TOKENS.USDC_MAINNET : tokens_1.TOKENS.USDC_DEVNET;
+        if (trimmed === 'USDT')
+            return isMainnet ? tokens_1.TOKENS.USDT_MAINNET : tokens_1.TOKENS.USDT_DEVNET;
+        return trimmed;
     }
 };
 exports.JupiterService = JupiterService;

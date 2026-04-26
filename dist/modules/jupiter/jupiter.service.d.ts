@@ -9,4 +9,5 @@ export declare class JupiterService {
     constructor(httpService: HttpService, configService: ConfigService);
     getQuote(inputMint: string, outputMint: string, amountRaw: string, slippageBps?: number): Promise<any>;
     getSwapTransaction(quoteResponse: any, userPublicKey: string): Promise<any>;
+    private resolveMint;
 }
