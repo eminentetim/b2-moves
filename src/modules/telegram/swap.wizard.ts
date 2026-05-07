@@ -35,8 +35,7 @@ export class SwapWizard {
     }
 
     const knownMints: Record<string, string> = {
-        [TOKENS.USDC_DEVNET]: 'USDC',
-        [TOKENS.USDT_DEVNET]: 'USDT',
+        [TOKENS.TARDIS]: 'TARDIS',
         [TOKENS.USDC_MAINNET]: 'USDC',
     };
 
@@ -68,11 +67,14 @@ export class SwapWizard {
     (ctx.wizard.state as any).inputToken = symbol;
     (ctx.wizard.state as any).inputMint = mint;
 
+    const isDevnet = process.env.SOLANA_CLUSTER === 'devnet';
+
     await ctx.editMessageText(`Selected: *${symbol}*\n\nNow, what token would you like to receive?`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'USDC', callback_data: `target:USDC:${TOKENS.USDC_DEVNET}` }],
+                [{ text: 'TARDIS', callback_data: `target:TARDIS:${TOKENS.TARDIS}` }],
+                [{ text: 'USDC', callback_data: `target:USDC:${isDevnet ? TOKENS.USDC_DEVNET : TOKENS.USDC_MAINNET}` }],
                 [{ text: 'SOL', callback_data: `target:SOL:${TOKENS.SOL}` }],
             ]
         }

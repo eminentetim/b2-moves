@@ -50,23 +50,77 @@ const config_1 = require("@nestjs/config");
 const rxjs_1 = require("rxjs");
 const dns = __importStar(require("node:dns"));
 const tokens_1 = require("../../common/constants/tokens");
+const web3_js_1 = require("@solana/web3.js");
 let JupiterService = JupiterService_1 = class JupiterService {
     httpService;
     configService;
     logger = new common_1.Logger(JupiterService_1.name);
     apiUrl;
     apiKey;
+    connection;
     constructor(httpService, configService) {
         this.httpService = httpService;
         this.configService = configService;
         dns.setDefaultResultOrder('ipv4first');
         this.apiUrl = this.configService.get('JUPITER_API_URL', 'https://api.jup.ag/swap/v1');
         this.apiKey = this.configService.getOrThrow('JUPITER_API_KEY');
+        this.connection = new web3_js_1.Connection(this.configService.getOrThrow('SOLANA_RPC_URL'));
+    }
+    async getPrices(mints) {
+        const isDevnet = this.configService.get('SOLANA_CLUSTER') === 'devnet';
+        try {
+            const ids = mints.join(',');
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`https://api.jup.ag/price/v3?ids=${ids}`, {
+                headers: { 'x-api-key': this.apiKey }
+            }));
+            const prices = {};
+            if (response.data) {
+                for (const [id, info] of Object.entries(response.data)) {
+                    prices[id] = info.usdPrice;
+                }
+            }
+            if (isDevnet) {
+                mints.forEach(m => {
+                    if (!prices[m]) {
+                        if (m === tokens_1.TOKENS.TARDIS)
+                            prices[m] = 1.0;
+                        else if (m === tokens_1.TOKENS.SOL)
+                            prices[m] = 140.0;
+                        else
+                            prices[m] = 1.0;
+                    }
+                });
+            }
+            return prices;
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch prices: ${error.message}`);
+            if (isDevnet) {
+                return mints.reduce((acc, m) => ({ ...acc, [m]: 1.0 }), {});
+            }
+            return {};
+        }
     }
     async getQuote(inputMint, outputMint, amountRaw, slippageBps = 50) {
-        const isMainnet = this.configService.get('SOLANA_CLUSTER') !== 'devnet';
-        const resolvedInput = this.resolveMint(inputMint, isMainnet);
-        const resolvedOutput = this.resolveMint(outputMint, isMainnet);
+        const isDevnet = this.configService.get('SOLANA_CLUSTER') === 'devnet';
+        const resolvedInput = this.resolveMint(inputMint, !isDevnet);
+        const resolvedOutput = this.resolveMint(outputMint, !isDevnet);
+        if (isDevnet && (resolvedInput === tokens_1.TOKENS.TARDIS || resolvedOutput === tokens_1.TOKENS.TARDIS)) {
+            this.logger.log(`🛠️ Devnet Mock Quote for TARDIS: ${amountRaw}`);
+            return {
+                inputMint: resolvedInput,
+                outputMint: resolvedOutput,
+                inAmount: amountRaw,
+                outAmount: amountRaw,
+                otherAmountThreshold: amountRaw,
+                swapMode: 'ExactIn',
+                slippageBps: slippageBps,
+                priceImpactPct: '0',
+                routePlan: [],
+                contextSlot: 0,
+                timeLambda: 0
+            };
+        }
         const url = `${this.apiUrl}/quote`;
         const params = {
             inputMint: resolvedInput,
@@ -75,7 +129,7 @@ let JupiterService = JupiterService_1 = class JupiterService {
             slippageBps,
         };
         try {
-            this.logger.log(`🔍 Jupiter Request (${isMainnet ? 'Mainnet' : 'Devnet'}): ${JSON.stringify(params)}`);
+            this.logger.log(`🔍 Jupiter Request (${!isDevnet ? 'Mainnet' : 'Devnet'}): ${JSON.stringify(params)}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(url, {
                 params,
                 headers: { 'x-api-key': this.apiKey },
@@ -86,10 +140,41 @@ let JupiterService = JupiterService_1 = class JupiterService {
             if (error.response) {
                 this.logger.error(`❌ Jupiter Error [${error.response.status}]: ${JSON.stringify(error.response.data)}`);
             }
+            if (isDevnet) {
+                this.logger.warn('Falling back to Devnet Mock Quote due to Jupiter error');
+                return {
+                    inputMint: resolvedInput,
+                    outputMint: resolvedOutput,
+                    inAmount: amountRaw,
+                    outAmount: amountRaw,
+                    slippageBps: slippageBps
+                };
+            }
             throw error;
         }
     }
     async getSwapTransaction(quoteResponse, userPublicKey) {
+        const isDevnet = this.configService.get('SOLANA_CLUSTER') === 'devnet';
+        if (isDevnet) {
+            this.logger.log(`🛠️ Building Devnet Mock Swap Transaction for ${userPublicKey}`);
+            const transaction = new web3_js_1.Transaction();
+            transaction.add(web3_js_1.SystemProgram.transfer({
+                fromPubkey: new web3_js_1.PublicKey(userPublicKey),
+                toPubkey: new web3_js_1.PublicKey(userPublicKey),
+                lamports: 0,
+            }));
+            transaction.feePayer = new web3_js_1.PublicKey(userPublicKey);
+            const { blockhash } = await this.connection.getLatestBlockhash();
+            transaction.recentBlockhash = blockhash;
+            const serializedTransaction = transaction.serialize({
+                requireAllSignatures: false,
+                verifySignatures: false,
+            });
+            return {
+                swapTransaction: serializedTransaction.toString('base64'),
+                lastValidBlockHeight: 0
+            };
+        }
         try {
             this.logger.log(`Jupiter: Building swap transaction for ${userPublicKey}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/swap`, {
@@ -118,6 +203,8 @@ let JupiterService = JupiterService_1 = class JupiterService {
             return isMainnet ? tokens_1.TOKENS.USDC_MAINNET : tokens_1.TOKENS.USDC_DEVNET;
         if (trimmed === 'USDT')
             return isMainnet ? tokens_1.TOKENS.USDT_MAINNET : tokens_1.TOKENS.USDT_DEVNET;
+        if (trimmed === 'TARDIS')
+            return tokens_1.TOKENS.TARDIS;
         return trimmed;
     }
 };

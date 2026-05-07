@@ -21,6 +21,7 @@ let VanishService = VanishService_1 = class VanishService {
     logger = new common_1.Logger(VanishService_1.name);
     apiUrl;
     apiKey;
+    isDevnet;
     LOAN_SOL = '12000000';
     JITO_TIP = '1000000';
     constructor(httpService, configService) {
@@ -28,6 +29,7 @@ let VanishService = VanishService_1 = class VanishService {
         this.configService = configService;
         this.apiUrl = this.configService.getOrThrow('VANISH_API_URL');
         this.apiKey = this.configService.getOrThrow('VANISH_API_KEY');
+        this.isDevnet = this.configService.get('SOLANA_CLUSTER') === 'devnet';
     }
     getHeaders() {
         return {
@@ -48,6 +50,10 @@ let VanishService = VanishService_1 = class VanishService {
         }
     }
     async getOneTimeWallet() {
+        if (this.isDevnet) {
+            this.logger.log('🛠️ Vanish Mock: Generating OTW...');
+            return '7vBszamHn5C5SbWSErrr8Arq29FhcGk9i5KzBKcxk5DT';
+        }
         try {
             this.logger.log('Vanish: Requesting OTW...');
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`${this.apiUrl}/trade/one-time-wallet`, {
@@ -61,6 +67,14 @@ let VanishService = VanishService_1 = class VanishService {
         }
     }
     async createTrade(payload) {
+        if (this.isDevnet) {
+            this.logger.log(`🛠️ Vanish Mock: Creating Trade for ${payload.user_address}`);
+            return {
+                status: 'success',
+                tx_id: `mock-ghost-tx-${Date.now()}`,
+                message: 'Trade created successfully (MOCK)'
+            };
+        }
         try {
             this.logger.log(`Vanish: Sending Trade Create Payload: ${JSON.stringify(payload)}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/trade/create`, {
@@ -81,6 +95,14 @@ let VanishService = VanishService_1 = class VanishService {
         }
     }
     async commitAction(tx_id) {
+        if (this.isDevnet && tx_id.startsWith('mock-')) {
+            this.logger.log(`🛠️ Vanish Mock: Committing TX ${tx_id}`);
+            return {
+                status: 'completed',
+                tx_id: tx_id,
+                signature: '5mockSignature...xyz'
+            };
+        }
         try {
             this.logger.log(`Vanish: Committing TX ${tx_id}`);
             const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${this.apiUrl}/commit`, { tx_id }, {

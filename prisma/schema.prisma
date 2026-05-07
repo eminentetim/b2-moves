@@ -8,12 +8,16 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(uuid())
-  telegramId      String   @unique
-  solanaPublicKey String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  intents         Intent[]
+  id               String            @id @default(uuid())
+  telegramId       String            @unique
+  solanaPublicKey  String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  intents          Intent[]
+  rebalanceIntents RebalanceIntent[]
+  limitOrders      LimitOrder[]
+  positions        Position[]
+  dcaOrders        DcaOrder[]
 }
 
 model Intent {
@@ -30,4 +34,110 @@ model Intent {
   privacyScore    Float?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model RebalanceIntent {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [telegramId])
+  
+  targetWeights   String       // JSON string of { mint/symbol: weight }
+  slippage        Float
+  status          String       @default("PENDING") // PENDING, VALIDATED, CALCULATED, PLANNED, EXECUTING, PARTIAL, COMPLETED, FAILED
+  
+  snapshotT0      String?      // JSON portfolio snapshot before
+  snapshotT1      String?      // JSON portfolio snapshot after
+  plan            String?      // JSON of generated trade plan
+  
+  chunks          TradeChunk[]
+  messageId       Int?         // Store Telegram message ID for progress updates
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model TradeChunk {
+  id                String          @id @default(uuid())
+  rebalanceIntentId String
+  rebalanceIntent   RebalanceIntent @relation(fields: [rebalanceIntentId], references: [id])
+  
+  inputToken        String
+  outputToken       String
+  amount            Float
+  
+  status            String          @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  txId              String?
+  outAmount         Float?
+  delayMs           Int             @default(0) // Random delay applied before execution
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// For Limit Orders
+model LimitOrder {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [telegramId])
+  inputToken  String
+  outputToken String
+  amountIn    Float // Amount of inputToken to sell
+  triggerPrice Float // The price of outputToken (in terms of inputToken) at which to execute
+  status      String   @default("ACTIVE") // ACTIVE, FILLED, CANCELLED, FAILED
+
+  // Signature for execution
+  signature   String?
+  timestamp   String?
+  nonce       String?
+  slippage    Float    @default(0.5)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// For TP/SL, we first need to track user positions
+model Position {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [telegramId])
+  tokenMint     String   // The mint of the token being held
+  amount        Float
+  entryPrice    Float    // Average entry price in USD
+
+  // TP/SL levels
+  takeProfitPrice Float?
+  stopLossPrice   Float?
+
+  // Signature for exit execution
+  signature   String?
+  timestamp   String?
+  nonce       String?
+
+  status        String   @default("OPEN") // OPEN, CLOSED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, tokenMint])
+}
+
+// For DCA
+model DcaOrder {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [telegramId])
+  fromToken       String    // e.g., 'USDC'
+  toToken         String    // e.g., 'SOL'
+  amount          Float     // Amount of fromToken to spend
+  frequency       String    // 'daily', 'weekly', 'monthly'
+  nextExecutionAt DateTime
+  status          String    @default("ACTIVE") // ACTIVE, PAUSED, COMPLETED
+
+  // Signature for repeated execution
+  signature   String?
+  timestamp   String?
+  nonce       String?
+  slippage    Float         @default(0.5)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

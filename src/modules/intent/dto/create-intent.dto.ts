@@ -43,9 +43,48 @@ export class CreateIntentDto {
 
   @IsString()
   @IsOptional()
+  intentId?: string;
+
+  @IsString()
+  @IsOptional()
   timestamp?: string;
 
   @IsNumber()
   @IsOptional()
   messageId?: number;
+
+  // Trading specific fields (Limit Order)
+  @IsNumber()
+  @IsOptional()
+  amountIn?: number;
+
+  @IsNumber()
+  @IsOptional()
+  triggerPrice?: number;
+
+  // DCA specific fields
+  @IsString()
+  @IsOptional()
+  fromToken?: string;
+
+  @IsString()
+  @IsOptional()
+  toToken?: string;
+
+  @IsString()
+  @IsOptional()
+  frequency?: string;
+
+  // TP/SL specific fields
+  @IsString()
+  @IsOptional()
+  tokenMint?: string;
+
+  @IsNumber()
+  @IsOptional()
+  takeProfitPrice?: number;
+
+  @IsNumber()
+  @IsOptional()
+  stopLossPrice?: number;
 }

@@ -3,58 +3,89 @@ import { Context, Scenes } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
 import { UseGuards, Logger } from '@nestjs/common';
 import { TelegramRateLimiterGuard } from './telegram-rate-limiter.guard';
+import { PrismaService } from '../../database/prisma/prisma.service';
 
 @Update()
 @UseGuards(TelegramRateLimiterGuard)
 export class TelegramUpdate {
   private readonly logger = new Logger('TelegramBot');
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Start()
   async onStart(ctx: Scenes.SceneContext) {
-    this.logger.log(`Received /start from user ${ctx.from?.id}`);
-    await ctx.scene.enter('onboarding-wizard');
+    const telegramId = ctx.from?.id.toString();
+    const user = await this.prisma.user.findUnique({ where: { telegramId } });
+
+    if (!user || !user.solanaPublicKey) {
+      await ctx.scene.enter('onboarding-wizard');
+      return;
+    }
+
+    await ctx.reply(
+      `Welcome back, Agent. 🛸\n\nYour stealth link is active. What move would you like to make?`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔀 Ghost Swap', callback_data: 'menu:swap' }],
+            [{ text: '⚖️ Private Rebalance', callback_data: 'menu:rebalance' }],
+            [{ text: '🎯 Limit Order', callback_data: 'menu:limit' }],
+            [{ text: '🔁 DCA Strategy', callback_data: 'menu:dca' }],
+            [{ text: '🛡️ My Positions', callback_data: 'menu:positions' }],
+            [{ text: '👤 My Identity', callback_data: 'menu:identity' }]
+          ]
+        }
+      }
+    );
   }
 
-  @Help()
-  async onHelp(ctx: Context) {
-    this.logger.log(`Received /help from user ${ctx.from?.id}`);
-    await ctx.reply(
-      'B2 Moves allows you to swap Solana tokens without linkability.\n\n' +
-      'How it works:\n' +
-      '1. Define your swap (/swap)\n' +
-      '2. Sign the intent with your wallet\n' +
-      '3. B2 Moves executes via Vanish + Jupiter\n' +
-      '4. Receive tokens at a fresh, unlinked address.'
-    );
+  @On('callback_query')
+  async onMenuSelection(ctx: Scenes.SceneContext) {
+    const data = (ctx.callbackQuery as any).data;
+    if (!data || !data.startsWith('menu:')) return;
+
+    const action = data.split(':')[1];
+
+    if (action === 'swap') {
+        await ctx.answerCbQuery();
+        await ctx.scene.enter('swap-wizard');
+    } else if (action === 'rebalance') {
+        await ctx.answerCbQuery();
+        await ctx.scene.enter('rebalance-wizard');
+    } else if (action === 'limit') {
+        await ctx.answerCbQuery();
+        await ctx.scene.enter('limit-order-wizard');
+    } else if (action === 'dca') {
+        await ctx.answerCbQuery();
+        await ctx.scene.enter('dca-wizard');
+    } else if (action === 'positions') {
+        await ctx.answerCbQuery();
+        await ctx.scene.enter('positions-wizard');
+    } else if (action === 'identity') {
+        const user = await this.prisma.user.findUnique({ where: { telegramId: ctx.from?.id.toString() } });
+        await ctx.answerCbQuery();
+        await ctx.reply(`🛡️ *Identity Status*\n\nLinked Wallet: \`${user?.solanaPublicKey}\`\nStatus: Stealth Active`, { parse_mode: 'Markdown' });
+    }
   }
 
   @Command('swap')
   async onSwap(ctx: Scenes.SceneContext) {
-    this.logger.log(`Received /swap from user ${ctx.from?.id}`);
     await ctx.scene.enter('swap-wizard');
   }
 
   @Command('link')
   async onLink(ctx: Context) {
-    this.logger.log(`Received /link from user ${ctx.from?.id}`);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    
     await ctx.reply(
-      '🛸 *B2 Onboarding: Stealth Activation*\n\n' +
-      'To execute private intents, you must link your Solana identity.\n\n' +
-      '1️⃣ Tap the button below.\n' +
-      '2️⃣ Sign the one-time activation message.\n' +
-      '3️⃣ Return here to start moving.',
+      '🛸 *B2 Onboarding: Stealth Activation*\n\nTap the button to link your Solana identity.',
       {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[
-            { 
-              text: '🛡️ Activate Stealth Link', 
-              web_app: { url: `${frontendUrl}/link?userId=${ctx.from?.id}` } 
-            }
+            { text: '🛡️ Activate Stealth Link', web_app: { url: `${frontendUrl}/link?userId=${ctx.from?.id}` } }
           ]]
         }
       }

@@ -53,7 +53,7 @@ let AppController = class AppController {
     getHome(res) {
         return res.sendFile((0, path_1.join)(process.cwd(), '..', 'b2-signer', 'dist', 'index.html'));
     }
-    handleDeepLinks(res) {
+    handleAppRoutes(res) {
         return res.sendFile((0, path_1.join)(process.cwd(), '..', 'b2-signer', 'dist', 'index.html'));
     }
 };
@@ -66,12 +66,12 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "getHome", null);
 __decorate([
-    (0, common_1.Get)(['link', 'sign']),
+    (0, common_1.Get)(['link', 'sign', 'rebalance']),
     __param(0, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], AppController.prototype, "handleDeepLinks", null);
+], AppController.prototype, "handleAppRoutes", null);
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)()
 ], AppController);

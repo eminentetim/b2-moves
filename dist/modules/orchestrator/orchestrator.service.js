@@ -19,9 +19,11 @@ const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 let OrchestratorService = OrchestratorService_1 = class OrchestratorService {
     executionQueue;
+    rebalanceQueue;
     logger = new common_1.Logger(OrchestratorService_1.name);
-    constructor(executionQueue) {
+    constructor(executionQueue, rebalanceQueue) {
         this.executionQueue = executionQueue;
+        this.rebalanceQueue = rebalanceQueue;
     }
     async addIntentToQueue(intent) {
         this.logger.log(`Enqueuing intent for user: ${intent.userId}`);
@@ -33,7 +35,24 @@ let OrchestratorService = OrchestratorService_1 = class OrchestratorService {
             },
             removeOnComplete: true,
         });
-        this.logger.log(`Job added to queue with ID: ${job.id}`);
+        this.logger.log(`Job added to execution queue with ID: ${job.id}`);
+        return job;
+    }
+    async addRebalanceToQueue(rebalanceIntentId, telegramId, messageId) {
+        this.logger.log(`Enqueuing rebalance intent: ${rebalanceIntentId} for user: ${telegramId}`);
+        const job = await this.rebalanceQueue.add('plan-rebalance', {
+            rebalanceIntentId,
+            telegramId,
+            messageId
+        }, {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 1000,
+            },
+            removeOnComplete: true,
+        });
+        this.logger.log(`Job added to rebalance queue with ID: ${job.id}`);
         return job;
     }
 };
@@ -41,6 +60,8 @@ exports.OrchestratorService = OrchestratorService;
 exports.OrchestratorService = OrchestratorService = OrchestratorService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, bullmq_1.InjectQueue)('execution')),
-    __metadata("design:paramtypes", [bullmq_2.Queue])
+    __param(1, (0, bullmq_1.InjectQueue)('rebalance')),
+    __metadata("design:paramtypes", [bullmq_2.Queue,
+        bullmq_2.Queue])
 ], OrchestratorService);
 //# sourceMappingURL=orchestrator.service.js.map

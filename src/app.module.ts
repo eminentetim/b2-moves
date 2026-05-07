@@ -16,6 +16,8 @@ import { JupiterModule } from './modules/jupiter/jupiter.module';
 import { VanishModule } from './modules/vanish/vanish.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { RpcModule } from './modules/rpc/rpc.module';
+import { RebalanceModule } from './modules/rebalance/rebalance.module';
+import { TradingModule } from './modules/trading/trading.module';
 
 @Module({
   imports: [
@@ -25,7 +27,8 @@ import { RpcModule } from './modules/rpc/rpc.module';
     PrismaModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), '..', 'b2-signer', 'dist'),
-      exclude: ['/intent*'],
+      // Remove all buggy regex filters
+      serveStaticOptions: { index: false } 
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -59,6 +62,8 @@ import { RpcModule } from './modules/rpc/rpc.module';
     JupiterModule,
     VanishModule,
     RpcModule,
+    RebalanceModule,
+    TradingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -69,7 +74,7 @@ export class AppModule implements NestModule {
       .apply((req, res, next) => {
         const logger = new Logger('HTTP');
         if (!req.url.includes('.') && !req.url.includes('assets')) {
-            logger.log(`Incoming Request: ${req.method} ${req.url}`);
+            logger.log(`[${req.method}] ${req.url}`);
         }
         next();
       })

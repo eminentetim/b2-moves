@@ -12,14 +12,18 @@ const intent_service_1 = require("./intent.service");
 const intent_controller_1 = require("./intent.controller");
 const intent_utility_1 = require("./intent.utility");
 const orchestrator_module_1 = require("../orchestrator/orchestrator.module");
+const prisma_module_1 = require("../../database/prisma/prisma.module");
+const telegram_module_1 = require("../telegram/telegram.module");
+const trading_module_1 = require("../trading/trading.module");
 let IntentModule = class IntentModule {
 };
 exports.IntentModule = IntentModule;
 exports.IntentModule = IntentModule = __decorate([
     (0, common_1.Module)({
-        imports: [orchestrator_module_1.OrchestratorModule],
+        imports: [orchestrator_module_1.OrchestratorModule, prisma_module_1.PrismaModule, telegram_module_1.TelegramModule, trading_module_1.TradingModule],
         providers: [intent_service_1.IntentService, intent_utility_1.IntentUtility],
         controllers: [intent_controller_1.IntentController],
+        exports: [intent_service_1.IntentService],
     })
 ], IntentModule);
 //# sourceMappingURL=intent.module.js.map

@@ -12,14 +12,29 @@ const telegram_service_1 = require("./telegram.service");
 const telegram_update_1 = require("./telegram.update");
 const swap_wizard_1 = require("./swap.wizard");
 const onboarding_wizard_1 = require("./onboarding.wizard");
+const rebalance_wizard_1 = require("./rebalance.wizard");
+const limit_order_wizard_1 = require("./limit-order.wizard");
+const dca_wizard_1 = require("./dca.wizard");
+const positions_wizard_1 = require("./positions.wizard");
 const rpc_module_1 = require("../rpc/rpc.module");
+const orchestrator_module_1 = require("../orchestrator/orchestrator.module");
+const prisma_module_1 = require("../../database/prisma/prisma.module");
 let TelegramModule = class TelegramModule {
 };
 exports.TelegramModule = TelegramModule;
 exports.TelegramModule = TelegramModule = __decorate([
     (0, common_1.Module)({
-        imports: [rpc_module_1.RpcModule],
-        providers: [telegram_service_1.TelegramService, telegram_update_1.TelegramUpdate, swap_wizard_1.SwapWizard, onboarding_wizard_1.OnboardingWizard],
+        imports: [rpc_module_1.RpcModule, orchestrator_module_1.OrchestratorModule, prisma_module_1.PrismaModule],
+        providers: [
+            telegram_service_1.TelegramService,
+            telegram_update_1.TelegramUpdate,
+            swap_wizard_1.SwapWizard,
+            onboarding_wizard_1.OnboardingWizard,
+            rebalance_wizard_1.RebalanceWizard,
+            limit_order_wizard_1.LimitOrderWizard,
+            dca_wizard_1.DcaWizard,
+            positions_wizard_1.PositionsWizard,
+        ],
         exports: [telegram_service_1.TelegramService],
     })
 ], TelegramModule);

@@ -4,15 +4,15 @@ import * as express from 'express';
 
 @Controller()
 export class AppController {
-  // Handle the root path
+  // Handle root
   @Get()
   getHome(@Res() res: express.Response) {
     return res.sendFile(join(process.cwd(), '..', 'b2-signer', 'dist', 'index.html'));
   }
 
-  // Handle known deep links specifically to avoid conflicts with assets
-  @Get(['link', 'sign'])
-  handleDeepLinks(@Res() res: express.Response) {
+  // Handle specific React routes
+  @Get(['link', 'sign', 'rebalance'])
+  handleAppRoutes(@Res() res: express.Response) {
     return res.sendFile(join(process.cwd(), '..', 'b2-signer', 'dist', 'index.html'));
   }
 }

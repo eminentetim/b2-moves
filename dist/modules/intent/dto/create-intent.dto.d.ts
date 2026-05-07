@@ -9,6 +9,15 @@ export declare class CreateIntentDto {
     signature: string;
     publicKey: string;
     action?: string;
+    intentId?: string;
     timestamp?: string;
     messageId?: number;
+    amountIn?: number;
+    triggerPrice?: number;
+    fromToken?: string;
+    toToken?: string;
+    frequency?: string;
+    tokenMint?: string;
+    takeProfitPrice?: number;
+    stopLossPrice?: number;
 }

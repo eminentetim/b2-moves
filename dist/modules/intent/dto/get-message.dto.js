@@ -21,8 +21,17 @@ class GetMessageDto {
     amount;
     slippage;
     action;
+    intentId;
     timestamp;
     messageId;
+    amountIn;
+    triggerPrice;
+    fromToken;
+    toToken;
+    frequency;
+    tokenMint;
+    takeProfitPrice;
+    stopLossPrice;
 }
 exports.GetMessageDto = GetMessageDto;
 __decorate([
@@ -71,6 +80,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
+], GetMessageDto.prototype, "intentId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
 ], GetMessageDto.prototype, "timestamp", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
@@ -78,4 +92,48 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => parseInt(value)),
     __metadata("design:type", Number)
 ], GetMessageDto.prototype, "messageId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseFloat(value)),
+    __metadata("design:type", Number)
+], GetMessageDto.prototype, "amountIn", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseFloat(value)),
+    __metadata("design:type", Number)
+], GetMessageDto.prototype, "triggerPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], GetMessageDto.prototype, "fromToken", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], GetMessageDto.prototype, "toToken", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], GetMessageDto.prototype, "frequency", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], GetMessageDto.prototype, "tokenMint", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseFloat(value)),
+    __metadata("design:type", Number)
+], GetMessageDto.prototype, "takeProfitPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => parseFloat(value)),
+    __metadata("design:type", Number)
+], GetMessageDto.prototype, "stopLossPrice", void 0);
 //# sourceMappingURL=get-message.dto.js.map

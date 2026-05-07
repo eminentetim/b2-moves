@@ -51,20 +51,26 @@ const common_1 = require("@nestjs/common");
 const orchestrator_service_1 = require("../orchestrator/orchestrator.service");
 const prisma_service_1 = require("../../database/prisma/prisma.service");
 const intent_utility_1 = require("./intent.utility");
+const telegram_service_1 = require("../telegram/telegram.service");
+const trading_service_1 = require("../trading/trading.service");
 const nacl = __importStar(require("tweetnacl"));
 const bs58_1 = __importDefault(require("bs58"));
 let IntentService = IntentService_1 = class IntentService {
     orchestratorService;
     prisma;
     utility;
+    telegramService;
+    tradingService;
     logger = new common_1.Logger(IntentService_1.name);
-    constructor(orchestratorService, prisma, utility) {
+    constructor(orchestratorService, prisma, utility, telegramService, tradingService) {
         this.orchestratorService = orchestratorService;
         this.prisma = prisma;
         this.utility = utility;
+        this.telegramService = telegramService;
+        this.tradingService = tradingService;
     }
     async processIntent(createIntentDto) {
-        this.logger.log(`Processing intent for user: ${createIntentDto.userId}`);
+        this.logger.log(`Processing intent for user: ${createIntentDto.userId} (Action: ${createIntentDto.action || 'SWAP'})`);
         const isValid = this.verifySignature(createIntentDto);
         if (!isValid) {
             this.logger.error(`Invalid signature for user: ${createIntentDto.userId}`);
@@ -79,11 +85,61 @@ let IntentService = IntentService_1 = class IntentService {
             },
         });
         if (createIntentDto.action === 'LINK_WALLET') {
-            await this.orchestratorService['telegramService'].notifyUser(createIntentDto.userId, `🛡️ *Stealth Activation Confirmed*\n\nYour identity is now linked to: \`${createIntentDto.publicKey}\`\n\nYou are ready to move in silence. Use /swap to begin.`);
-            return {
-                status: 'success',
-                message: 'Wallet linked successfully',
-            };
+            await this.telegramService.notifyUser(createIntentDto.userId, `🛡️ *Stealth Activation Confirmed*\n\nYour identity is now linked to: \`${createIntentDto.publicKey}\`\n\nYou are ready to move in silence.`);
+            return { status: 'success', message: 'Wallet linked successfully' };
+        }
+        if (createIntentDto.action === 'CREATE_LIMIT_ORDER') {
+            await this.tradingService.createLimitOrder(createIntentDto);
+            await this.telegramService.notifyUser(createIntentDto.userId, `🎯 *Limit Order Set*\n\nBuy ${createIntentDto.outputToken} when price hits \`${createIntentDto.triggerPrice}\`.\n\n_Your move is queued in the shadows._`);
+            return { status: 'success', message: 'Limit order created' };
+        }
+        if (createIntentDto.action === 'CREATE_DCA_ORDER') {
+            await this.tradingService.createDcaOrder(createIntentDto);
+            await this.telegramService.notifyUser(createIntentDto.userId, `🔁 *DCA Strategy Active*\n\nBuying ${createIntentDto.outputToken} ${createIntentDto.frequency}.\n\n_Persistence is the ultimate stealth._`);
+            return { status: 'success', message: 'DCA order created' };
+        }
+        if (createIntentDto.action === 'UPDATE_POSITION_PROTECTION') {
+            await this.tradingService.updatePositionProtection(createIntentDto);
+            await this.telegramService.notifyUser(createIntentDto.userId, `🛡️ *Position Protection Active*\n\nTP/SL levels synced for ${createIntentDto.tokenMint}.\n\n_Your exits are now automated and private._`);
+            return { status: 'success', message: 'Position protection updated' };
+        }
+        if (createIntentDto.action === 'AUTHORIZE_REBALANCE') {
+            const rebalanceIntentId = createIntentDto.intentId;
+            this.logger.log(`Authorizing Rebalance: ${rebalanceIntentId}`);
+            await this.prisma.rebalanceIntent.update({
+                where: { id: rebalanceIntentId },
+                data: { status: 'EXECUTING' }
+            });
+            const rebalanceIntent = await this.prisma.rebalanceIntent.findUnique({
+                where: { id: rebalanceIntentId },
+                include: { chunks: true }
+            });
+            if (rebalanceIntent) {
+                for (const chunk of rebalanceIntent.chunks) {
+                    const intent = await this.prisma.intent.create({
+                        data: {
+                            userId: rebalanceIntent.userId,
+                            inputToken: chunk.inputToken,
+                            outputToken: chunk.outputToken,
+                            amount: chunk.amount,
+                            slippage: rebalanceIntent.slippage,
+                            status: 'PENDING',
+                        }
+                    });
+                    await this.orchestratorService.addIntentToQueue({
+                        userId: rebalanceIntent.userId,
+                        inputToken: chunk.inputToken,
+                        outputToken: chunk.outputToken,
+                        amount: chunk.amount,
+                        publicKey: createIntentDto.publicKey,
+                        signature: createIntentDto.signature,
+                        timestamp: createIntentDto.timestamp,
+                        messageId: rebalanceIntent.messageId,
+                        intentId: intent.id,
+                    });
+                }
+            }
+            return { status: 'success', message: 'Rebalance authorized and executing' };
         }
         if (!createIntentDto.inputToken || !createIntentDto.outputToken || !createIntentDto.amount) {
             throw new Error('Missing swap details in intent');
@@ -102,12 +158,10 @@ let IntentService = IntentService_1 = class IntentService {
             ...createIntentDto,
             intentId: intent.id
         });
-        this.logger.log(`Intent ${intent.id} verified and enqueued for user: ${createIntentDto.userId}`);
         return {
             status: 'queued',
             intentId: intent.id,
             message: 'Intent verified and queued for execution',
-            nonce: createIntentDto.nonce,
         };
     }
     verifySignature(dto) {
@@ -130,6 +184,8 @@ exports.IntentService = IntentService = IntentService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [orchestrator_service_1.OrchestratorService,
         prisma_service_1.PrismaService,
-        intent_utility_1.IntentUtility])
+        intent_utility_1.IntentUtility,
+        telegram_service_1.TelegramService,
+        trading_service_1.TradingService])
 ], IntentService);
 //# sourceMappingURL=intent.service.js.map

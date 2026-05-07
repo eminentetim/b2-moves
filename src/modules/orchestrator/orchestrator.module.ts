@@ -7,6 +7,9 @@ import { OrchestratorService } from './orchestrator.service';
     BullModule.registerQueue({
       name: 'execution',
     }),
+    BullModule.registerQueue({
+      name: 'rebalance',
+    }),
   ],
   providers: [OrchestratorService],
   exports: [OrchestratorService],

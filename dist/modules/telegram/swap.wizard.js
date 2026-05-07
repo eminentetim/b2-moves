@@ -43,8 +43,7 @@ let SwapWizard = class SwapWizard {
             buttons.push([{ text: `SOL (${solBalance.toFixed(3)})`, callback_data: `select:SOL:${tokens_1.TOKENS.SOL}` }]);
         }
         const knownMints = {
-            [tokens_1.TOKENS.USDC_DEVNET]: 'USDC',
-            [tokens_1.TOKENS.USDT_DEVNET]: 'USDT',
+            [tokens_1.TOKENS.TARDIS]: 'TARDIS',
             [tokens_1.TOKENS.USDC_MAINNET]: 'USDC',
         };
         tokens.forEach(t => {
@@ -69,11 +68,13 @@ let SwapWizard = class SwapWizard {
         const [, symbol, mint] = data.split(':');
         ctx.wizard.state.inputToken = symbol;
         ctx.wizard.state.inputMint = mint;
+        const isDevnet = process.env.SOLANA_CLUSTER === 'devnet';
         await ctx.editMessageText(`Selected: *${symbol}*\n\nNow, what token would you like to receive?`, {
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: 'USDC', callback_data: `target:USDC:${tokens_1.TOKENS.USDC_DEVNET}` }],
+                    [{ text: 'TARDIS', callback_data: `target:TARDIS:${tokens_1.TOKENS.TARDIS}` }],
+                    [{ text: 'USDC', callback_data: `target:USDC:${isDevnet ? tokens_1.TOKENS.USDC_DEVNET : tokens_1.TOKENS.USDC_MAINNET}` }],
                     [{ text: 'SOL', callback_data: `target:SOL:${tokens_1.TOKENS.SOL}` }],
                 ]
             }

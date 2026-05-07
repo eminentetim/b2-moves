@@ -19,6 +19,9 @@ exports.OrchestratorModule = OrchestratorModule = __decorate([
             bullmq_1.BullModule.registerQueue({
                 name: 'execution',
             }),
+            bullmq_1.BullModule.registerQueue({
+                name: 'rebalance',
+            }),
         ],
         providers: [orchestrator_service_1.OrchestratorService],
         exports: [orchestrator_service_1.OrchestratorService],

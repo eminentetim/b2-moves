@@ -22,8 +22,17 @@ class CreateIntentDto {
     signature;
     publicKey;
     action;
+    intentId;
     timestamp;
     messageId;
+    amountIn;
+    triggerPrice;
+    fromToken;
+    toToken;
+    frequency;
+    tokenMint;
+    takeProfitPrice;
+    stopLossPrice;
 }
 exports.CreateIntentDto = CreateIntentDto;
 __decorate([
@@ -80,10 +89,55 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
+], CreateIntentDto.prototype, "intentId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
 ], CreateIntentDto.prototype, "timestamp", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateIntentDto.prototype, "messageId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateIntentDto.prototype, "amountIn", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateIntentDto.prototype, "triggerPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateIntentDto.prototype, "fromToken", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateIntentDto.prototype, "toToken", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateIntentDto.prototype, "frequency", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateIntentDto.prototype, "tokenMint", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateIntentDto.prototype, "takeProfitPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateIntentDto.prototype, "stopLossPrice", void 0);
 //# sourceMappingURL=create-intent.dto.js.map

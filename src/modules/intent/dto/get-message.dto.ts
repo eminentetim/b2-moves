@@ -38,10 +38,53 @@ export class GetMessageDto {
 
   @IsString()
   @IsOptional()
+  intentId?: string;
+
+  @IsString()
+  @IsOptional()
   timestamp?: string;
 
   @IsNumber()
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
   messageId?: number;
+
+  // Trading specific fields (Limit Order)
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
+  amountIn?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
+  triggerPrice?: number;
+
+  // DCA specific fields
+  @IsString()
+  @IsOptional()
+  fromToken?: string;
+
+  @IsString()
+  @IsOptional()
+  toToken?: string;
+
+  @IsString()
+  @IsOptional()
+  frequency?: string;
+
+  // TP/SL specific fields
+  @IsString()
+  @IsOptional()
+  tokenMint?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
+  takeProfitPrice?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
+  stopLossPrice?: number;
 }

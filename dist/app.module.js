@@ -58,13 +58,15 @@ const jupiter_module_1 = require("./modules/jupiter/jupiter.module");
 const vanish_module_1 = require("./modules/vanish/vanish.module");
 const prisma_module_1 = require("./database/prisma/prisma.module");
 const rpc_module_1 = require("./modules/rpc/rpc.module");
+const rebalance_module_1 = require("./modules/rebalance/rebalance.module");
+const trading_module_1 = require("./modules/trading/trading.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
             .apply((req, res, next) => {
             const logger = new common_1.Logger('HTTP');
             if (!req.url.includes('.') && !req.url.includes('assets')) {
-                logger.log(`Incoming Request: ${req.method} ${req.url}`);
+                logger.log(`[${req.method}] ${req.url}`);
             }
             next();
         })
@@ -81,7 +83,7 @@ exports.AppModule = AppModule = __decorate([
             prisma_module_1.PrismaModule,
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(process.cwd(), '..', 'b2-signer', 'dist'),
-                exclude: ['/intent*'],
+                serveStaticOptions: { index: false }
             }),
             bullmq_1.BullModule.forRootAsync({
                 inject: [config_1.ConfigService],
@@ -115,6 +117,8 @@ exports.AppModule = AppModule = __decorate([
             jupiter_module_1.JupiterModule,
             vanish_module_1.VanishModule,
             rpc_module_1.RpcModule,
+            rebalance_module_1.RebalanceModule,
+            trading_module_1.TradingModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -11,12 +11,10 @@ export declare class IntentController {
         status: string;
         message: string;
         intentId?: undefined;
-        nonce?: undefined;
     } | {
         status: string;
         intentId: string;
         message: string;
-        nonce: string;
     }>;
     getMessage(query: GetMessageDto): Promise<{
         message: string;

@@ -6,6 +6,7 @@ export declare class VanishService {
     private readonly logger;
     private readonly apiUrl;
     private readonly apiKey;
+    private readonly isDevnet;
     private readonly LOAN_SOL;
     private readonly JITO_TIP;
     constructor(httpService: HttpService, configService: ConfigService);
