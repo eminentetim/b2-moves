@@ -110,7 +110,7 @@ export class DcaWizard {
             { 
               text: '🛡️ Authorize DCA Move', 
               web_app: { 
-                url: `${frontendUrl}/dca?userId=${ctx.from?.id}&from=${state.fromToken}&to=${state.toToken}&amount=${state.amount}&freq=${state.frequency}` 
+                url: `${frontendUrl}/?mode=dca&userId=${ctx.from?.id}&from=${state.fromToken}&to=${state.toToken}&amount=${state.amount}&freq=${state.frequency}` 
               } 
             }
           ]]

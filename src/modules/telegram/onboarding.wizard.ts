@@ -47,7 +47,7 @@ export class OnboardingWizard {
           inline_keyboard: [[
             { 
               text: '🛡️ Securely Link Wallet', 
-              web_app: { url: `${frontendUrl}/link?userId=${ctx.from?.id}` } 
+              web_app: { url: `${frontendUrl}/?link=true&userId=${ctx.from?.id}` } 
             }
           ]]
         }

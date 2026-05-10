@@ -185,7 +185,7 @@ export class RebalanceProcessor extends WorkerHost {
             inline_keyboard: [[
               { 
                 text: '🛡️ Authorize Multi-Chunk Execution', 
-                web_app: { url: `${frontendUrl}/rebalance?intentId=${rebalanceIntentId}&userId=${telegramId}` } 
+                web_app: { url: `${frontendUrl}/?intentId=${rebalanceIntentId}&userId=${telegramId}` } 
               }
             ]]
           }

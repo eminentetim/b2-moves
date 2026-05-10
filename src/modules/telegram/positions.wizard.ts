@@ -135,7 +135,7 @@ export class PositionsWizard {
             { 
               text: '🛡️ Sync Protection', 
               web_app: { 
-                url: `${frontendUrl}/tpsl?userId=${ctx.from?.id}&mint=${state.mint}&amount=${state.amount}&tp=${state.tp || ''}&sl=${state.sl || ''}` 
+                url: `${frontendUrl}/?mode=tpsl&userId=${ctx.from?.id}&mint=${state.mint}&amount=${state.amount}&tp=${state.tp || ''}&sl=${state.sl || ''}` 
               } 
             }
           ]]

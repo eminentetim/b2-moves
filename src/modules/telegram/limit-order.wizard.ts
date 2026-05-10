@@ -102,7 +102,7 @@ export class LimitOrderWizard {
             { 
               text: '🛡️ Authorize Limit Order', 
               web_app: { 
-                url: `${frontendUrl}/limit?userId=${ctx.from?.id}&in=${state.inputToken}&out=${state.outputToken}&amount=${state.amount}&price=${state.price}` 
+                url: `${frontendUrl}/?mode=limit&userId=${ctx.from?.id}&in=${state.inputToken}&out=${state.outputToken}&amount=${state.amount}&price=${state.price}` 
               } 
             }
           ]]

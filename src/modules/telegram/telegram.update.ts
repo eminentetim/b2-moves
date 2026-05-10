@@ -95,7 +95,7 @@ export class TelegramUpdate {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[
-            { text: '🛡️ Activate Stealth Link', web_app: { url: `${frontendUrl}/link?userId=${ctx.from?.id}` } }
+            { text: '🛡️ Activate Stealth Link', web_app: { url: `${frontendUrl}/?link=true&userId=${ctx.from?.id}` } }
           ]]
         }
       }

@@ -120,7 +120,7 @@ export class SwapWizard {
           inline_keyboard: [[
             { 
               text: '✍️ Sign & Execute Move', 
-              web_app: { url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${0}` } 
+              web_app: { url: `${frontendUrl}/?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${0}` } 
             }
           ]]
         }
@@ -135,7 +135,7 @@ export class SwapWizard {
             inline_keyboard: [[
                 { 
                   text: '✍️ Sign & Execute Move', 
-                  web_app: { url: `${frontendUrl}/sign?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${summaryMsg.message_id}` } 
+                  web_app: { url: `${frontendUrl}/?amount=${state.amount}&in=${state.inputToken}&out=${state.outputToken}&userId=${ctx.from?.id}&msgId=${summaryMsg.message_id}` } 
                 }
             ]]
         }
