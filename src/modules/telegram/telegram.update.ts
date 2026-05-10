@@ -46,9 +46,15 @@ export class TelegramUpdate {
   @On('callback_query')
   async onMenuSelection(ctx: Scenes.SceneContext) {
     const data = (ctx.callbackQuery as any).data;
-    if (!data || !data.startsWith('menu:')) return;
+    this.logger.log(`Received callback query: ${data}`);
+    
+    if (!data || !data.startsWith('menu:')) {
+        this.logger.warn(`Ignoring non-menu callback: ${data}`);
+        return;
+    }
 
     const action = data.split(':')[1];
+    this.logger.log(`Executing menu action: ${action}`);
 
     if (action === 'deposit') {
         await ctx.answerCbQuery();
