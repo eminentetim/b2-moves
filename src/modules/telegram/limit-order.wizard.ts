@@ -19,7 +19,6 @@ export class LimitOrderWizard {
         reply_markup: {
           inline_keyboard: [
             [{ text: 'SOL', callback_data: 'token:SOL' }],
-            [{ text: 'TARDIS', callback_data: 'token:TARDIS' }],
             [{ text: 'USDC', callback_data: 'token:USDC' }],
           ]
         }
@@ -42,7 +41,6 @@ export class LimitOrderWizard {
         reply_markup: {
           inline_keyboard: [
             [{ text: 'SOL', callback_data: 'token:SOL' }],
-            [{ text: 'TARDIS', callback_data: 'token:TARDIS' }],
             [{ text: 'USDC', callback_data: 'token:USDC' }],
             [{ text: 'BONK', callback_data: 'token:BONK' }],
           ]
@@ -93,8 +91,8 @@ export class LimitOrderWizard {
     
     await ctx.reply(
       `🎯 *Limit Order Summary*\n\n` +
-      `Sell: ${state.amount} ${state.inputToken}\n` +
-      `Buy: ${state.outputToken}\n` +
+      `Sell: ${state.amount} ${state.inputToken.replace(/_/g, '\\_')}\n` +
+      `Buy: ${state.outputToken.replace(/_/g, '\\_')}\n` +
       `Target Price: $${state.price}\n\n` +
       `_Authorize this intent to activate the shadow trigger._`,
       {

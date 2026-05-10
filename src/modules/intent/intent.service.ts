@@ -5,6 +5,7 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 import { IntentUtility } from './intent.utility';
 import { TelegramService } from '../telegram/telegram.service';
 import { TradingService } from '../trading/trading.service';
+import { Keypair } from '@solana/web3.js';
 import * as nacl from 'tweetnacl';
 import bs58 from 'bs58';
 
@@ -30,20 +31,38 @@ export class IntentService {
     }
 
     // 1. Ensure User exists and link wallet
-    await this.prisma.user.upsert({
-      where: { telegramId: createIntentDto.userId },
-      update: { solanaPublicKey: createIntentDto.publicKey },
-      create: { 
-        telegramId: createIntentDto.userId,
-        solanaPublicKey: createIntentDto.publicKey,
-      },
-    });
+    let user = await this.prisma.user.findUnique({ where: { telegramId: createIntentDto.userId } });
+    
+    if (!user) {
+        const agent = Keypair.generate();
+        user = await this.prisma.user.create({
+            data: {
+                telegramId: createIntentDto.userId,
+                solanaPublicKey: createIntentDto.publicKey,
+                agentPublicKey: agent.publicKey.toBase58(),
+                agentSecretKey: Buffer.from(agent.secretKey).toString('base64'),
+            }
+        });
+    } else if (!user.agentPublicKey) {
+        const agent = Keypair.generate();
+        user = await this.prisma.user.update({
+            where: { telegramId: createIntentDto.userId },
+            data: {
+                solanaPublicKey: createIntentDto.publicKey,
+                agentPublicKey: agent.publicKey.toBase58(),
+                agentSecretKey: Buffer.from(agent.secretKey).toString('base64'),
+            }
+        });
+    }
 
     // ACTION: LINK_WALLET
     if (createIntentDto.action === 'LINK_WALLET') {
         await this.telegramService.notifyUser(
             createIntentDto.userId, 
-            `🛡️ *Stealth Activation Confirmed*\n\nYour identity is now linked to: \`${createIntentDto.publicKey}\`\n\nYou are ready to move in silence.`
+            `🛡️ *Stealth Activation Confirmed*\n\n` +
+            `Your Main Wallet: \`${createIntentDto.publicKey}\`\n\n` +
+            `🚀 *Agent Wallet Generated*:\n\`${user.agentPublicKey}\`\n\n` +
+            `_Use the /deposit command to fund your Agent Wallet for automated private moves._`
         );
         return { status: 'success', message: 'Wallet linked successfully' };
     }
@@ -63,7 +82,7 @@ export class IntentService {
         await this.tradingService.createDcaOrder(createIntentDto);
         await this.telegramService.notifyUser(
             createIntentDto.userId,
-            `🔁 *DCA Strategy Active*\n\nBuying ${createIntentDto.outputToken} ${ (createIntentDto as any).frequency }.\n\n_Persistence is the ultimate stealth._`
+            `🔁 *DCA Strategy Active*\n\nBuying ${createIntentDto.outputToken} ${(createIntentDto as any).frequency}.\n\n_Persistence is the ultimate stealth._`
         );
         return { status: 'success', message: 'DCA order created' };
     }
@@ -73,7 +92,7 @@ export class IntentService {
         await this.tradingService.updatePositionProtection(createIntentDto);
         await this.telegramService.notifyUser(
             createIntentDto.userId,
-            `🛡️ *Position Protection Active*\n\nTP/SL levels synced for ${ (createIntentDto as any).tokenMint }.\n\n_Your exits are now automated and private._`
+            `🛡️ *Position Protection Active*\n\nTP/SL levels synced for ${(createIntentDto as any).tokenMint}.\n\n_Your exits are now automated and private._`
         );
         return { status: 'success', message: 'Position protection updated' };
     }
@@ -95,6 +114,7 @@ export class IntentService {
         });
 
         if (rebalanceIntent) {
+            let delayOffset = 0;
             for (const chunk of rebalanceIntent.chunks) {
                 // Create a standard Intent record for each chunk for tracking
                 const intent = await this.prisma.intent.create({
@@ -108,7 +128,7 @@ export class IntentService {
                     }
                 });
 
-                // Queue each chunk as a standard execution job
+                // Queue each chunk as a standard execution job with staggered delay
                 await this.orchestratorService.addIntentToQueue({
                     userId: rebalanceIntent.userId,
                     inputToken: chunk.inputToken,
@@ -119,7 +139,9 @@ export class IntentService {
                     timestamp: createIntentDto.timestamp,
                     messageId: rebalanceIntent.messageId as number,
                     intentId: intent.id, // CRITICAL: Pass the intent ID
-                } as any);
+                } as any, delayOffset);
+                
+                delayOffset += 3000; // 3 second delay between chunks
             }
         }
 

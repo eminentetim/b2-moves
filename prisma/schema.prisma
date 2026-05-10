@@ -11,6 +11,11 @@ model User {
   id               String            @id @default(uuid())
   telegramId       String            @unique
   solanaPublicKey  String?
+  
+  // For Automated Private Trading (DCA/Limit)
+  agentPublicKey   String?
+  agentSecretKey   String?           // Should be encrypted in a real production app
+  
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   intents          Intent[]
@@ -32,6 +37,13 @@ model Intent {
   txId            String?
   outAmount       Float?
   privacyScore    Float?
+
+  // Linking to automated orders
+  dcaOrderId      String?
+  dcaOrder        DcaOrder? @relation(fields: [dcaOrderId], references: [id])
+  limitOrderId    String?
+  limitOrder      LimitOrder? @relation(fields: [limitOrderId], references: [id])
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -91,6 +103,8 @@ model LimitOrder {
   nonce       String?
   slippage    Float    @default(0.5)
 
+  intents     Intent[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -137,6 +151,8 @@ model DcaOrder {
   timestamp   String?
   nonce       String?
   slippage    Float         @default(0.5)
+
+  intents         Intent[]
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

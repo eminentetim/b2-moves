@@ -5,8 +5,8 @@ export const TOKENS = {
   USDC_MAINNET: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   USDT_MAINNET: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
   
-  // Devnet - Using TARDIS for all testing
-  TARDIS: 'F6izQxrshxgNhVCyPDHk3T5B9x7is67eiH9fLni8Wyyk',
-  USDC_DEVNET: 'F6izQxrshxgNhVCyPDHk3T5B9x7is67eiH9fLni8Wyyk', // Map USDC to TARDIS on devnet
-  USDT_DEVNET: 'F6izQxrshxgNhVCyPDHk3T5B9x7is67eiH9fLni8Wyyk', // Map USDT to TARDIS on devnet
+  // Shortcuts
+  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  BONK: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
 } as const;

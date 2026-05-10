@@ -35,7 +35,6 @@ export class SwapWizard {
     }
 
     const knownMints: Record<string, string> = {
-        [TOKENS.TARDIS]: 'TARDIS',
         [TOKENS.USDC_MAINNET]: 'USDC',
     };
 
@@ -67,14 +66,11 @@ export class SwapWizard {
     (ctx.wizard.state as any).inputToken = symbol;
     (ctx.wizard.state as any).inputMint = mint;
 
-    const isDevnet = process.env.SOLANA_CLUSTER === 'devnet';
-
     await ctx.editMessageText(`Selected: *${symbol}*\n\nNow, what token would you like to receive?`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'TARDIS', callback_data: `target:TARDIS:${TOKENS.TARDIS}` }],
-                [{ text: 'USDC', callback_data: `target:USDC:${isDevnet ? TOKENS.USDC_DEVNET : TOKENS.USDC_MAINNET}` }],
+                [{ text: 'USDC', callback_data: `target:USDC:${TOKENS.USDC_MAINNET}` }],
                 [{ text: 'SOL', callback_data: `target:SOL:${TOKENS.SOL}` }],
             ]
         }
@@ -114,8 +110,8 @@ export class SwapWizard {
 
     const summaryMsg = await ctx.reply(
       `🎯 *Swap Summary*:\n\n` +
-      `*Sell*: ${state.amount} ${state.inputToken}\n` +
-      `*Receive*: ${state.outputToken}\n` +
+      `*Sell*: ${state.amount} ${state.inputToken.replace(/_/g, '\\_')}\n` +
+      `*Receive*: ${state.outputToken.replace(/_/g, '\\_')}\n` +
       `*Privacy*: Vanish Level 3 (Maximum)\n\n` +
       `To execute this trade, please sign the intent:`,
       {

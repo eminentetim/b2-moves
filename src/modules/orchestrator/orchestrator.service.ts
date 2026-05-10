@@ -12,14 +12,15 @@ export class OrchestratorService {
     @InjectQueue('rebalance') private readonly rebalanceQueue: Queue
   ) {}
 
-  async addIntentToQueue(intent: CreateIntentDto) {
-    this.logger.log(`Enqueuing intent for user: ${intent.userId}`);
+  async addIntentToQueue(intent: CreateIntentDto, delay: number = 0) {
+    this.logger.log(`Enqueuing intent for user: ${intent.userId} (Delay: ${delay}ms)`);
     
     const job = await this.executionQueue.add('execute-swap', intent, {
       attempts: 3,
+      delay, // Add the delay here
       backoff: {
         type: 'exponential',
-        delay: 1000,
+        delay: 5000, // Increase base backoff to 5s for rate limit recovery
       },
       removeOnComplete: true,
     });

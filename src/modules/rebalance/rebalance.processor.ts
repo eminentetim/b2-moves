@@ -104,10 +104,9 @@ export class RebalanceProcessor extends WorkerHost {
       const sells = deltas.filter(d => d.action === 'SELL');
       const buys = deltas.filter(d => d.action === 'BUY');
 
-      const isDevnet = process.env.SOLANA_CLUSTER === 'devnet';
-      const isBasePresent = Object.keys(targetWeights).some(k => k === 'USDC' || k === 'TARDIS');
-      let baseMint = isBasePresent ? (currentPortfolio['TARDIS']?.mint || currentPortfolio['USDC']?.mint || (isDevnet ? TOKENS.TARDIS : TOKENS.USDC_MAINNET)) : (isDevnet ? TOKENS.TARDIS : TOKENS.USDC_MAINNET);
-      const baseSymbol = isDevnet ? 'TARDIS' : 'USDC';
+      const isBasePresent = Object.keys(targetWeights).includes('USDC');
+      let baseMint = isBasePresent ? currentPortfolio['USDC']?.mint || TOKENS.USDC_MAINNET : TOKENS.USDC_MAINNET;
+      const baseSymbol = 'USDC';
 
       for (const sell of sells) {
          if (sell.symbol === baseSymbol) continue;

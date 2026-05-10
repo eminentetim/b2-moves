@@ -120,10 +120,11 @@ export class PositionsWizard {
   async finish(ctx: Scenes.WizardContext) {
     const state = ctx.wizard.state as any;
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const displaySymbol = state.symbol.replace(/_/g, '\\_');
     
     await ctx.reply(
       `🛡️ *Position Protection Summary*\n\n` +
-      `Token: ${state.symbol}\n` +
+      `Token: ${displaySymbol}\n` +
       `Take Profit: ${state.tp ? `$${state.tp}` : 'Not set'}\n` +
       `Stop Loss: ${state.sl ? `$${state.sl}` : 'Not set'}\n\n` +
       `_Authorize to sync these levels with the B2 Trigger Engine._`,

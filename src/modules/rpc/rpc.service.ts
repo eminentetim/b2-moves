@@ -13,18 +13,21 @@ export class RpcService implements OnModuleInit {
   }
 
   onModuleInit() {
+    const cluster = this.configService.get<string>('SOLANA_CLUSTER', 'mainnet');
+    const primaryUrl = this.configService.getOrThrow<string>('SOLANA_RPC_URL');
+    
     const urls = [
-      'https://api.devnet.solana.com', // Priority #1 for testing
+      primaryUrl,
       this.configService.get<string>('SOLANA_QUICKNODE_RPC'),
-      this.configService.get<string>('SOLANA_RPC_URL'),
-      'https://api.mainnet-beta.solana.com'
+      cluster === 'mainnet' ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com'
     ].filter(url => !!url) as string[];
 
     // Remove duplicates and initialize connections
     const uniqueUrls = [...new Set(urls)];
     this.connections = uniqueUrls.map(url => new Connection(url, this.commitment));
     
-    this.logger.log(`RPC Manager Initialized with ${this.connections.length} redundant endpoints.`);
+    this.logger.log(`RPC Manager Initialized for [${cluster}] with ${this.connections.length} redundant endpoints.`);
+    this.logger.log(`Primary RPC: ${uniqueUrls[0]}`);
   }
 
   /**

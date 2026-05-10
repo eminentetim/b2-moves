@@ -41,6 +41,7 @@ export class TradingProcessor {
     });
     const prices = await this.jupiterService.getPrices(Array.from(tokens));
 
+    let delayOffset = 0;
     for (const order of activeOrders) {
       const inputMint = this.getMint(order.inputToken);
       const outputMint = this.getMint(order.outputToken);
@@ -53,8 +54,7 @@ export class TradingProcessor {
       let trigger = false;
       
       // Determine direction: Is user BUYING or SELLING the 'volatile' asset?
-      // For simplicity, assume if outputToken is USDC/USDT/TARDIS, they are SELLING inputToken.
-      const isSelling = order.outputToken.includes('USD') || order.outputToken === 'TARDIS';
+      const isSelling = order.outputToken.includes('USD');
       
       if (isSelling) {
           // Sell when price is HIGH
@@ -65,7 +65,7 @@ export class TradingProcessor {
       }
       
       if (trigger) {
-        this.logger.log(`Triggering Limit Order ${order.id} for user ${order.userId}`);
+        this.logger.log(`Triggering Limit Order ${order.id} for user ${order.userId} (Staggered Delay: ${delayOffset}ms)`);
         
         await this.prisma.limitOrder.update({
           where: { id: order.id },
@@ -81,6 +81,7 @@ export class TradingProcessor {
             amount: order.amountIn,
             slippage: order.slippage,
             status: 'PENDING',
+            limitOrderId: order.id, // LINK TO LIMIT ORDER
           }
         });
 
@@ -95,7 +96,9 @@ export class TradingProcessor {
           amount: order.amountIn,
           slippage: order.slippage,
           intentId: intent.id,
-        } as any);
+        } as any, delayOffset);
+
+        delayOffset += 3000; // 3 second stagger
       }
     }
   }
@@ -110,14 +113,17 @@ export class TradingProcessor {
       include: { user: true },
     });
 
+    let delayOffset = 0;
     for (const order of dueOrders) {
-      this.logger.log(`Triggering DCA Order ${order.id} for user ${order.userId}`);
+      this.logger.log(`Triggering DCA Order ${order.id} for user ${order.userId} (Staggered Delay: ${delayOffset}ms)`);
 
-      // Calculate next execution time
+      // Calculate next execution time - Ensure it ALWAYS moves forward
       let nextExecutionAt = new Date();
-      if (order.frequency === 'daily') nextExecutionAt.setDate(now.getDate() + 1);
-      else if (order.frequency === 'weekly') nextExecutionAt.setDate(now.getDate() + 7);
-      else if (order.frequency === 'monthly') nextExecutionAt.setMonth(now.getMonth() + 1);
+      const freq = order.frequency.toLowerCase();
+      if (freq === 'daily') nextExecutionAt.setDate(now.getDate() + 1);
+      else if (freq === 'weekly') nextExecutionAt.setDate(now.getDate() + 7);
+      else if (freq === 'monthly') nextExecutionAt.setMonth(now.getMonth() + 1);
+      else nextExecutionAt.setDate(now.getDate() + 1); // Default fallback: +1 day
 
       await this.prisma.dcaOrder.update({
         where: { id: order.id },
@@ -133,6 +139,7 @@ export class TradingProcessor {
           amount: order.amount,
           slippage: order.slippage,
           status: 'PENDING',
+          dcaOrderId: order.id, // LINK TO DCA ORDER
         }
       });
 
@@ -147,7 +154,9 @@ export class TradingProcessor {
         amount: order.amount,
         slippage: order.slippage,
         intentId: intent.id,
-      } as any);
+      } as any, delayOffset);
+
+      delayOffset += 3000; // 3 second stagger
     }
   }
 
@@ -168,6 +177,7 @@ export class TradingProcessor {
     const mints = Array.from(new Set(openPositions.map((p) => p.tokenMint)));
     const prices = await this.jupiterService.getPrices(mints);
 
+    let delayOffset = 0;
     for (const pos of openPositions) {
       const currentPrice = prices[pos.tokenMint];
       if (!currentPrice) continue;
@@ -177,7 +187,7 @@ export class TradingProcessor {
       if (pos.stopLossPrice && currentPrice <= pos.stopLossPrice) trigger = true;
 
       if (trigger) {
-        this.logger.log(`Triggering TP/SL for Position ${pos.id} for user ${pos.userId}`);
+        this.logger.log(`Triggering TP/SL for Position ${pos.id} for user ${pos.userId} (Staggered Delay: ${delayOffset}ms)`);
 
         await this.prisma.position.update({
           where: { id: pos.id },
@@ -208,18 +218,16 @@ export class TradingProcessor {
           amount: pos.amount,
           slippage: 0.5,
           intentId: intent.id,
-        } as any);
+        } as any, delayOffset);
+
+        delayOffset += 3000; // 3 second stagger
       }
     }
   }
 
   private getMint(symbol: string): string {
     if (symbol === 'SOL') return TOKENS.SOL;
-    if (symbol === 'TARDIS') return TOKENS.TARDIS;
-    if (symbol === 'USDC') {
-        const isDevnet = process.env.SOLANA_CLUSTER === 'devnet';
-        return isDevnet ? TOKENS.USDC_DEVNET : TOKENS.USDC_MAINNET;
-    }
+    if (symbol === 'USDC') return TOKENS.USDC_MAINNET;
     // Map other symbols if needed or return symbol as mint
     const tokenKey = Object.keys(TOKENS).find(k => k.startsWith(symbol));
     return tokenKey ? TOKENS[tokenKey as keyof typeof TOKENS] : symbol;

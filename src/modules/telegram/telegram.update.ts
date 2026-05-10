@@ -30,6 +30,7 @@ export class TelegramUpdate {
       {
         reply_markup: {
           inline_keyboard: [
+            [{ text: '📥 Private Deposit', callback_data: 'menu:deposit' }],
             [{ text: '🔀 Ghost Swap', callback_data: 'menu:swap' }],
             [{ text: '⚖️ Private Rebalance', callback_data: 'menu:rebalance' }],
             [{ text: '🎯 Limit Order', callback_data: 'menu:limit' }],
@@ -49,7 +50,10 @@ export class TelegramUpdate {
 
     const action = data.split(':')[1];
 
-    if (action === 'swap') {
+    if (action === 'deposit') {
+        await ctx.answerCbQuery();
+        await ctx.scene.enter('deposit-wizard');
+    } else if (action === 'swap') {
         await ctx.answerCbQuery();
         await ctx.scene.enter('swap-wizard');
     } else if (action === 'rebalance') {

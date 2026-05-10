@@ -7,12 +7,14 @@ import { RebalanceWizard } from './rebalance.wizard';
 import { LimitOrderWizard } from './limit-order.wizard';
 import { DcaWizard } from './dca.wizard';
 import { PositionsWizard } from './positions.wizard';
+import { DepositWizard } from './deposit.wizard';
 import { RpcModule } from '../rpc/rpc.module';
 import { OrchestratorModule } from '../orchestrator/orchestrator.module';
 import { PrismaModule } from '../../database/prisma/prisma.module';
+import { VanishModule } from '../vanish/vanish.module';
 
 @Module({
-  imports: [RpcModule, OrchestratorModule, PrismaModule],
+  imports: [RpcModule, OrchestratorModule, PrismaModule, VanishModule],
   providers: [
     TelegramService,
     TelegramUpdate,
@@ -22,6 +24,7 @@ import { PrismaModule } from '../../database/prisma/prisma.module';
     LimitOrderWizard,
     DcaWizard,
     PositionsWizard,
+    DepositWizard,
   ],
   exports: [TelegramService],
 })

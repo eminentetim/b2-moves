@@ -32,7 +32,6 @@ export class RebalanceWizard {
     }
     
     const knownMints: Record<string, string> = {
-        [TOKENS.TARDIS]: 'TARDIS',
         [TOKENS.USDC_MAINNET]: 'USDC',
     };
 
@@ -104,7 +103,7 @@ export class RebalanceWizard {
             return ctx.scene.reenter();
         }
 
-        const summary = Object.entries(state.targets).map(([k,v]) => `• ${k}: ${v}%`).join('\n');
+        const summary = Object.entries(state.targets).map(([k,v]) => `• ${k.replace(/_/g, '\\_')}: ${v}%`).join('\n');
         const processingMsg = await ctx.reply(
             `🚀 *Move Authorized*\n\n` +
             `Target Portfolio:\n${summary}\n\n` +

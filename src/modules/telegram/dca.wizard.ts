@@ -18,7 +18,6 @@ export class DcaWizard {
       {
         reply_markup: {
           inline_keyboard: [
-            [{ text: 'TARDIS', callback_data: 'token:TARDIS' }],
             [{ text: 'USDC', callback_data: 'token:USDC' }],
             [{ text: 'SOL', callback_data: 'token:SOL' }],
           ]
@@ -42,7 +41,6 @@ export class DcaWizard {
         reply_markup: {
           inline_keyboard: [
             [{ text: 'SOL', callback_data: 'token:SOL' }],
-            [{ text: 'TARDIS', callback_data: 'token:TARDIS' }],
             [{ text: 'BONK', callback_data: 'token:BONK' }],
           ]
         }
@@ -101,8 +99,8 @@ export class DcaWizard {
     
     await ctx.reply(
       `🔁 *DCA Strategy Summary*\n\n` +
-      `Sell: ${state.amount} ${state.fromToken}\n` +
-      `Accumulate: ${state.toToken}\n` +
+      `Sell: ${state.amount} ${state.fromToken.replace(/_/g, '\\_')}\n` +
+      `Accumulate: ${state.toToken.replace(/_/g, '\\_')}\n` +
       `Frequency: ${state.frequency}\n\n` +
       `_Authorize the recurring intent to start the accumulation._`,
       {
