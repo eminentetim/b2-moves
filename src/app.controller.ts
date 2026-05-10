@@ -4,6 +4,11 @@ import * as express from 'express';
 
 @Controller()
 export class AppController {
+  @Get('health')
+  checkHealth() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
+
   // Handle root
   @Get()
   getHome(@Res() res: express.Response) {
