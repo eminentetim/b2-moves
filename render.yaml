@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: b2-moves-backend
+    runtime: node
+    plan: starter
+    buildCommand: pnpm install && npx prisma generate && pnpm run build
+    startCommand: pnpm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Set this in Render dashboard to point to the disk
+    disk:
+      name: b2-data
+      mountPath: /opt/render/project/src/prisma
+      sizeGB: 1
