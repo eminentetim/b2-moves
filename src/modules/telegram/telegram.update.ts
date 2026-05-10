@@ -6,7 +6,7 @@ import { TelegramRateLimiterGuard } from './telegram-rate-limiter.guard';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 @Update()
-@UseGuards(TelegramRateLimiterGuard)
+// @UseGuards(TelegramRateLimiterGuard)
 export class TelegramUpdate {
   private readonly logger = new Logger('TelegramBot');
 
