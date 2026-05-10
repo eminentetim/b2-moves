@@ -43,7 +43,13 @@ import { TradingModule } from './modules/trading/trading.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         token: configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN'),
-        middlewares: [session()],
+        middlewares: [
+            session(),
+            (ctx: any, next: any) => {
+                console.log(`[Telegraf] Incoming update: ${ctx.updateType}`);
+                return next();
+            }
+        ],
         include: [TelegramModule],
         options: {
             telegram: {
